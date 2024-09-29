@@ -33,6 +33,8 @@ repositories {
 dependencies {
     testImplementation(libs.junit)
     // Add Gradle Tooling API dependency
+    implementation("com.github.javaparser:javaparser-core:3.24.2") // Add JavaParser dependency
+    
     implementation("org.gradle:gradle-tooling-api:7.3-20210825160000+0000")
     // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {

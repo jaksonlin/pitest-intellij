@@ -13,34 +13,38 @@ import org.gradle.tooling.model.idea.IdeaSingleEntryLibraryDependency
 import java.awt.Desktop
 import java.io.File
 import java.net.URI
+import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
+import com.github.jaksonlin.pitestintellij.util.JavaFileProcessor
+data class TargetClassInfo(val file: Path, val sourceRoot: Path)
 
 class RunPitestAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
-        val project = e.project ?: return
+        val targetProject = e.project ?: return
         // 1. find the file that the user right click that fire this action
         val file = e.getData(PlatformDataKeys.VIRTUAL_FILE) ?: return
         // 2. get the path of the file
         val targetTestPath = file.path
-        val fullyQualifiedTargetClassName = targetTestPath.substring(targetTestPath.indexOf("src/main/java/") + "src/main/java/".length, targetTestPath.length - ".java".length).replace("/", ".")
+        val javaFileProcessor = JavaFileProcessor()
+        val fullyQualifiedTargetTestClassName = javaFileProcessor.getFullyQualifiedName(targetTestPath) ?: return
 
         // 3. prompt user to input the target class that this test file test against
-        // 3.1 we can use the Messages.showInputDialog to prompt user to input the target class
-        val targetClass = Messages.showInputDialog(project, "Please input the target class", "Run Pitest", Messages.getQuestionIcon())
-        if (targetClass.isNullOrBlank()) {
-            return
-        }
-        // 3.2 find the project's java source file path
-        val sourceRoots = ModuleManager.getInstance(project).modules.flatMap { module ->
-            ModuleRootManager.getInstance(module).sourceRoots.toList()
-        }
+        val targetClassInfo = findTargetClassFile(targetProject) ?: return
+        val targetClassFile = targetClassInfo.file
+        val sourceRoot = targetClassInfo.sourceRoot
+        val fullyQualifiedTargetClassName = javaFileProcessor.getFullyQualifiedName(targetClassFile.toString()) ?: return
+
+
         // 3.3 determine the report directory, should align with junit report directory
-        val reportDirectory = Paths.get(project.basePath!!, "build", "reports", "pitest").toString()
+        val reportDirectory = Paths.get(targetProject.basePath!!, "build", "reports", "pitest").toString()
+        // create directory if not exist
+        File(reportDirectory).mkdirs()
         // 3.4 determine the classpath to run the test, or say the test dependencies, and put it in a classpath file, because it can be huge that commandline will fail to handle
-        val classpathFile = Paths.get(project.basePath!!, "build", "reports", "pitest", "classpath.txt").toString()
+        val classpathFile = Paths.get(targetProject.basePath!!, "build", "reports", "pitest", "classpath.txt").toString()
         // retrieve the test dependencies classpath for the test, this can be tracked by the gradle test task
         val classpath = mutableListOf<String>()
-        val connector = GradleConnector.newConnector().forProjectDirectory(File(project.basePath!!))
+        val connector = GradleConnector.newConnector().forProjectDirectory(File(targetProject.basePath!!))
         val connection = connector.connect()
         try {
             val ideaProject = connection.getModel(IdeaProject::class.java)
@@ -55,6 +59,7 @@ class RunPitestAction : AnAction() {
             connection.close()
         }
         // write the classpath to the classpath file
+
         File(classpathFile).writeText(classpath.joinToString(File.pathSeparator))
         // 4. prepare to run pitest
         // 4.1 we have placed the pitest jar files in the lib directory in this project, and it will bundle with the plugin,
@@ -69,13 +74,13 @@ class RunPitestAction : AnAction() {
                 "--reportDir",
                 reportDirectory,
                 "--targetClasses",
-                targetClass,
+                fullyQualifiedTargetClassName,
                 "--sourceDirs",
-                sourceRoots.joinToString(","),
+                sourceRoot.toString(),
                 "--classPathFile",
                 classpathFile,
                 "--targetTests",
-                fullyQualifiedTargetClassName,
+                fullyQualifiedTargetTestClassName,
                 "--outputFormats",
                 "HTML,XML",
                 "--timeoutConst",
@@ -99,5 +104,47 @@ class RunPitestAction : AnAction() {
         Desktop.getDesktop().browse(URI.create("file://$reportDirectory/index.html"))
         // 4.7 log the command that we run
         thisLogger().info("Run pitest with command: ${command.joinToString(" ")}")
+    }
+
+    fun findTargetClassFile(project: com.intellij.openapi.project.Project): TargetClassInfo? {
+        // Get the target class name from the user input
+        val targetClass = Messages.showInputDialog(project, "Please input the target class", "Run Pitest", Messages.getQuestionIcon())
+        if (targetClass.isNullOrBlank()) {
+            return null
+        }
+
+        // Get the source roots
+        val sourceRoots = ModuleManager.getInstance(project).modules.flatMap { module ->
+            ModuleRootManager.getInstance(module).contentRoots.map { contentRoot ->
+                Paths.get(contentRoot.path)
+            }
+        }
+        // Search for the target class file recursively in the source directories
+        for (sourceRoot in sourceRoots) {
+            val targetClassFile = findFileRecursively(sourceRoot, targetClass)
+            if (targetClassFile != null) {
+                // use the sourceRoot path to determine the package name
+                val packageName = targetClassFile.parent.toString().substring(sourceRoot.toString().length + 1).replace("/", ".")
+                // use the targetClass path to determine the class name
+                val className = targetClassFile.fileName.toString().substring(0, targetClassFile.fileName.toString().length - ".java".length)
+                val fullyQualifiedName = "$packageName.$className"
+                return TargetClassInfo(targetClassFile, sourceRoot)
+            }
+        }
+
+        // If the target class file is not found, return null
+        return null
+    }
+
+    fun findFileRecursively(directory: Path, targetClass: String): Path? {
+        if (!Files.exists(directory) || !Files.isDirectory(directory)) {
+            return null
+        }
+
+        val targetFileName = "$targetClass.java"
+        return Files.walk(directory)
+                .filter { path -> Files.isRegularFile(path) && path.fileName.toString() == targetFileName }
+                .findFirst()
+                .orElse(null)
     }
 }
