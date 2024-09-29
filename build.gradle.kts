@@ -33,6 +33,7 @@ repositories {
 dependencies {
     testImplementation(libs.junit)
     // Add Gradle Tooling API dependency
+    implementation(fileTree("lib") { include("*.jar") })
     implementation("com.github.javaparser:javaparser-core:3.24.2") // Add JavaParser dependency
     
     implementation("org.gradle:gradle-tooling-api:7.3-20210825160000+0000")

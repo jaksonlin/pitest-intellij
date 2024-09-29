@@ -64,7 +64,7 @@ class RunPitestAction : AnAction() {
         // 4. prepare to run pitest
         // 4.1 we have placed the pitest jar files in the lib directory in this project, and it will bundle with the plugin,
         // use it to run the pitest so that we can have full control on what to run
-        val pitestDependencies = Paths.get(project.basePath!!, "lib").toFile().listFiles { _, name -> name.endsWith(".jar") }?.joinToString(File.pathSeparator)
+        val pitestDependencies = File(javaClass.protectionDomain.codeSource.location.toURI()).parentFile.resolve("lib").listFiles { _, name -> name.endsWith(".jar") }?.joinToString(File.pathSeparator) { it.absolutePath } ?: ""
         // 4.2 prepare the command to run pitest
         val command = listOf(
                 "java",
@@ -99,7 +99,7 @@ class RunPitestAction : AnAction() {
         // 4.4 read the output of the command
         val output = process.inputStream.bufferedReader().readText()
         // 4.5 show the output to the user
-        Messages.showMessageDialog(project, output, "Pitest Output", Messages.getInformationIcon())
+        Messages.showMessageDialog(targetProject, output, "Pitest Output", Messages.getInformationIcon())
         // 4.6 show the report to the user
         Desktop.getDesktop().browse(URI.create("file://$reportDirectory/index.html"))
         // 4.7 log the command that we run
