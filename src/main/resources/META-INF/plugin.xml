@@ -15,4 +15,17 @@
     <applicationListeners>
         <listener class="com.github.jaksonlin.pitestintellij.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     </applicationListeners>
+    <!-- add right click entry to run pitest on a junit test file -->
+    <actions>
+        <group id="XKUnittestCheckMenu" text="menu.parent" description="XK Unittest Helper Tool" >
+
+        <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+
+        <action
+                class="com.github.jaksonlin.pitestintellij.actions.RunPitestAction"
+                id="RunPitestAction"
+                text="Run Pitest">
+        </action>
+        </group>
+    </actions>
 </idea-plugin>

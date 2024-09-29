@@ -1,0 +1,23 @@
+// .vscode/launch.json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug IntelliJ Plugin",
+            "request": "launch",
+            "mainClass": "com.intellij.idea.Main",
+            "projectName": "YourProjectName",
+            "args": [
+                "--config", "path/to/your/idea/config"
+            ],
+            "vmArgs": [
+                "-Xmx512m",
+                "-XX:MaxPermSize=250m",
+                "-Didea.system.path=path/to/your/system",
+                "-Didea.config.path=path/to/your/config",
+                "-Didea.plugins.path=path/to/your/plugins"
+            ]
+        }
+    ]
+}
