@@ -17,10 +17,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import com.github.jaksonlin.pitestintellij.util.JavaFileProcessor
+import com.intellij.buildsystem.model.BuildManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.roots.CompilerModuleExtension
+import com.intellij.openapi.roots.ProjectRootManager
 
 data class TargetClassInfo(val file: Path, val sourceRoot: Path)
 
@@ -63,9 +66,9 @@ class RunPitestAction : AnAction() {
         } finally {
             connection.close()
         }
-        // write the classpath to the classpath file
 
-        File(classpathFile).writeText(classpath.joinToString(File.pathSeparator))
+        // write the classpath to the classpath file, pitest classpath uses the newline to separate the classpath
+        File(classpathFile).writeText(classpath.joinToString("\n"))
 
         try {
             // 4. prepare to run pitest
@@ -79,7 +82,7 @@ class RunPitestAction : AnAction() {
             val command = listOf(
                 "java",
                 "-cp",
-                "$classpathFile${File.pathSeparator}$pitestDependencies",
+                pitestDependencies,
                 "org.pitest.mutationtest.commandline.MutationCoverageReport",
                 "--reportDir",
                 reportDirectory,
