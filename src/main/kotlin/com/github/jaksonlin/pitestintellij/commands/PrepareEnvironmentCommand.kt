@@ -16,7 +16,11 @@ import java.nio.file.Paths
 class PrepareEnvironmentCommand(project: Project, context: PitestContext) : PitestCommand(project, context) {
     private val javaFileProcessor = JavaFileProcessor()
     override fun execute() {
-        val testVirtualFile = context.testVirtualFile ?: throw IllegalStateException("Test file not set")
+        val testVirtualFile = context.testVirtualFile
+        if (testVirtualFile == null) {
+            showError("Cannot find test file")
+            throw IllegalStateException("Cannot find test file")
+        }
         collectTargetTestClassName(testVirtualFile)
         collectTargetClassThatWeTest()
         collectJavaInfo(testVirtualFile)
@@ -27,16 +31,26 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
     private fun collectTargetTestClassName(testVirtualFile: VirtualFile){
         // setup the target test file information
         context.fullyQualifiedTargetTestClassName = javaFileProcessor.getFullyQualifiedName(testVirtualFile.path)
-            ?: throw IllegalStateException("Cannot get fully qualified name for test class")
+        if (context.fullyQualifiedTargetTestClassName.isNullOrBlank()) {
+            showError("Cannot get fully qualified name for target test class")
+            throw IllegalStateException("Cannot get fully qualified name for target test class")
+        }
     }
     private fun collectJavaInfo(testVirtualFile: VirtualFile) {
         ReadAction.run<Throwable> {
             val projectModule = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(testVirtualFile)
-                ?: throw IllegalStateException("The file is not in a module")
+            if (projectModule == null) {
+                showError("Cannot find module for test file")
+                throw IllegalStateException("Cannot find module for test file")
+            }
 
             val moduleRootManager = ModuleRootManager.getInstance(projectModule)
             // collect the java that used to run the test
-            context.javaHome = moduleRootManager.sdk?.homePath ?: throw IllegalStateException("The module does not have a JDK")
+            context.javaHome = moduleRootManager.sdk?.homePath
+            if (context.javaHome.isNullOrBlank()) {
+                showError("Cannot find java home")
+                throw IllegalStateException("Cannot find java home")
+            }
         }
     }
 
@@ -53,8 +67,16 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         if (targetClass.isNullOrBlank()) {
             return
         }
-        val targetClassInfo = FileUtils.findTargetClassFile(context.sourceRoots, targetClass) ?: throw IllegalStateException("Cannot find target class file")
-        context.fullyQualifiedTargetClassName = javaFileProcessor.getFullyQualifiedName(targetClassInfo.file.toString()) ?: throw IllegalStateException("Cannot get fully qualified name for target class")
+        val targetClassInfo = FileUtils.findTargetClassFile(context.sourceRoots, targetClass)
+        if (targetClassInfo == null) {
+            showError("Cannot find target class file")
+            throw IllegalStateException("Cannot find target class file")
+        }
+        context.fullyQualifiedTargetClassName = javaFileProcessor.getFullyQualifiedName(targetClassInfo.file.toString())
+        if (context.fullyQualifiedTargetClassName.isNullOrBlank()) {
+            showError("Cannot get fully qualified name for target class")
+            throw IllegalStateException("Cannot get fully qualified name for target class")
+        }
         context.targetClassSourceRoot = targetClassInfo.sourceRoot.toString()
     }
     private fun prepareReportDirectory(){
