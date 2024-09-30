@@ -2,6 +2,7 @@ import com.github.jaksonlin.pitestintellij.commands.PitestContext
 import com.github.jaksonlin.pitestintellij.util.FileUtils
 import com.github.jaksonlin.pitestintellij.util.GradleUtils
 import com.github.jaksonlin.pitestintellij.util.JavaFileProcessor
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.ModuleManager
@@ -11,31 +12,41 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 
 class PrepareEnvironmentCommand(project: Project, context: PitestContext) : PitestCommand(project, context) {
     private val javaFileProcessor = JavaFileProcessor()
+
     override fun execute() {
-        val testVirtualFile = context.testVirtualFile
+        val testVirtualFile = ReadAction.compute<VirtualFile?, Throwable> {
+            context.testVirtualFile
+        }
         if (testVirtualFile == null) {
             showError("Cannot find test file")
             throw IllegalStateException("Cannot find test file")
         }
+
         collectTargetTestClassName(testVirtualFile)
-        collectTargetClassThatWeTest()
         collectJavaInfo(testVirtualFile)
+        collectSourceRoots()
+        
+        collectTargetClassThatWeTest()
         prepareReportDirectory()
         setupPitestLibDependencies()
         collectClassPathFileForPitest()
     }
-    private fun collectTargetTestClassName(testVirtualFile: VirtualFile){
-        // setup the target test file information
-        context.fullyQualifiedTargetTestClassName = javaFileProcessor.getFullyQualifiedName(testVirtualFile.path)
+
+    private fun collectTargetTestClassName(testVirtualFile: VirtualFile) {
+        ApplicationManager.getApplication().runReadAction {
+            context.fullyQualifiedTargetTestClassName = javaFileProcessor.getFullyQualifiedName(testVirtualFile.path)
+        }
         if (context.fullyQualifiedTargetTestClassName.isNullOrBlank()) {
             showError("Cannot get fully qualified name for target test class")
             throw IllegalStateException("Cannot get fully qualified name for target test class")
         }
     }
+
     private fun collectJavaInfo(testVirtualFile: VirtualFile) {
         ReadAction.run<Throwable> {
             val projectModule = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(testVirtualFile)
@@ -45,24 +56,26 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
             }
 
             val moduleRootManager = ModuleRootManager.getInstance(projectModule)
-            // collect the java that used to run the test
             context.javaHome = moduleRootManager.sdk?.homePath
-            if (context.javaHome.isNullOrBlank()) {
-                showError("Cannot find java home")
-                throw IllegalStateException("Cannot find java home")
-            }
+        }
+        if (context.javaHome.isNullOrBlank()) {
+            showError("Cannot find java home")
+            throw IllegalStateException("Cannot find java home")
         }
     }
 
-    private fun collectTargetClassThatWeTest() {
-        ReadAction.run<Throwable> {
-            context.sourceRoots = ModuleManager.getInstance(project).modules.flatMap { module ->
+    private fun collectSourceRoots() {
+        context.sourceRoots = ReadAction.compute<List<Path>, Throwable> {
+            ModuleManager.getInstance(project).modules.flatMap { module ->
                 ModuleRootManager.getInstance(module).contentRoots.map { contentRoot ->
                     Paths.get(contentRoot.path)
                 }
             }
         }
+    }
 
+    private fun collectTargetClassThatWeTest() {
+        // The user input dialog and file operations don't need to be in ReadAction
         val targetClass = showInputDialog("Please enter the name of the class that you want to test", "Enter target class")
         if (targetClass.isNullOrBlank()) {
             return
