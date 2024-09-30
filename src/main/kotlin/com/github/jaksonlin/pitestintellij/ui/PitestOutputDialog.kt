@@ -8,10 +8,10 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JTextArea
 
-class PitestOutputDialog(project: Project, private val output: String) : DialogWrapper(project) {
+class PitestOutputDialog(project: Project, private val output: String, titleInfo: String) : DialogWrapper(project) {
 
     init {
-        title = "Pitest Output"
+        title = titleInfo
         init()
     }
 
