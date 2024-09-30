@@ -1,12 +1,20 @@
 package com.github.jaksonlin.pitestintellij.actions
 
+import com.github.jaksonlin.pitestintellij.util.JavaFileProcessor
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.roots.CompilerModuleExtension
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.ui.Messages
+import com.intellij.platform.ide.progress.ModalTaskOwner.project
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.tooling.model.idea.IdeaSingleEntryLibraryDependency
@@ -16,14 +24,7 @@ import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import com.github.jaksonlin.pitestintellij.util.JavaFileProcessor
-import com.intellij.buildsystem.model.BuildManager
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.roots.CompilerModuleExtension
-import com.intellij.openapi.roots.ProjectRootManager
+
 
 data class TargetClassInfo(val file: Path, val sourceRoot: Path)
 
@@ -31,18 +32,29 @@ class RunPitestAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val targetProject = e.project ?: return
         // 1. find the file that the user right click that fire this action
-        val file = e.getData(PlatformDataKeys.VIRTUAL_FILE) ?: return
+        val testVirtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE) ?: return
         // 2. get the path of the file
-        val targetTestPath = file.path
+        val targetTestPath = testVirtualFile.path
         val javaFileProcessor = JavaFileProcessor()
         val fullyQualifiedTargetTestClassName = javaFileProcessor.getFullyQualifiedName(targetTestPath) ?: return
+        // 3. get the testfile module
+        val projectModule = ProjectRootManager.getInstance(targetProject).fileIndex.getModuleForFile(testVirtualFile)
+        if (projectModule == null) {
+            Messages.showMessageDialog(targetProject, "The file is not in a module", "Pitest Error", Messages.getErrorIcon())
+            return
+        }
+        val moduleRootManager = ModuleRootManager.getInstance(projectModule)
+        val javaHome = moduleRootManager.sdk!!.homePath
+        if (javaHome == null) {
+            Messages.showMessageDialog(targetProject, "The module does not have a JDK", "Pitest Error", Messages.getErrorIcon())
+            return
+        }
 
         // 3. prompt user to input the target class that this test file test against
         val targetClassInfo = findTargetClassFile(targetProject) ?: return
         val targetClassFile = targetClassInfo.file
         val sourceRoot = targetClassInfo.sourceRoot
         val fullyQualifiedTargetClassName = javaFileProcessor.getFullyQualifiedName(targetClassFile.toString()) ?: return
-
 
         // 3.3 determine the report directory, should align with junit report directory
         val reportDirectory = Paths.get(targetProject.basePath!!, "build", "reports", "pitest").toString()
@@ -56,13 +68,18 @@ class RunPitestAction : AnAction() {
         val connection = connector.connect()
         try {
             val ideaProject = connection.getModel(IdeaProject::class.java)
-            ideaProject.modules.forEach { module ->
-                module.dependencies.forEach { dependency ->
+            ideaProject.modules.forEach { ideaModule ->
+                ideaModule.dependencies.forEach { dependency ->
                     if (dependency is IdeaSingleEntryLibraryDependency) {
                         classpath.add(dependency.file.absolutePath)
                     }
                 }
+                ideaModule.gradleProject.buildDirectory?.let { buildDir ->
+                    classpath.add(File(buildDir, "classes/java/main").absolutePath)
+                    classpath.add(File(buildDir, "classes/java/test").absolutePath)
+                }
             }
+
         } finally {
             connection.close()
         }
