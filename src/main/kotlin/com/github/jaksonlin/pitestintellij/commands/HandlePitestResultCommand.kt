@@ -1,9 +1,10 @@
 package com.github.jaksonlin.pitestintellij.commands
 
 import PitestCommand
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import java.awt.Desktop
+import com.github.jaksonlin.pitestintellij.ui.PitestOutputDialog
 import java.io.File
 
 class HandlePitestResultCommand(project: Project, context: PitestContext) : PitestCommand(project, context) {
@@ -11,21 +12,22 @@ class HandlePitestResultCommand(project: Project, context: PitestContext) : Pite
         val result = context.processResult ?: throw IllegalStateException("Process result not available")
         when (result.exitCode) {
             0 -> {
-                showOutput(result.output, "Pitest Output")
-                try {
-                    val reportFile = File(context.reportDirectory!!, "index.html")
-                    if (reportFile.exists()) {
-                        Desktop.getDesktop().browse(reportFile.toURI())
-                    } else {
-                        showError("Report file not found: ${reportFile.absolutePath}")
-                    }
-                } catch (e: Exception) {
-                    thisLogger().error("Error opening report", e)
-                    showError("Error opening report: ${e.message}")
+                val reportFile = File(context.reportDirectory!!, "index.html")
+                if (reportFile.exists()) {
+                    showOutputWithReportButton(result.output, "Pitest Output", reportFile)
+                } else {
+                    showOutput(result.output, "Pitest Output")
+                    showError("Report file not found: ${reportFile.absolutePath}")
                 }
             }
             -1 -> showOutput("Error running Pitest:\n\n${result.errorOutput}", "Pitest Error")
             else -> showOutput("Pitest exited with code ${result.exitCode}:\n\n${result.errorOutput}", "Pitest Error")
+        }
+    }
+
+    private fun showOutputWithReportButton(output: String, title: String, reportFile: File) {
+        ApplicationManager.getApplication().invokeLater {
+            PitestOutputDialog(project, output, title, reportFile).show()
         }
     }
 }

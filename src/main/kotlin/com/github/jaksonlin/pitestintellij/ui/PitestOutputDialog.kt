@@ -2,20 +2,26 @@ package com.github.jaksonlin.pitestintellij.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import java.awt.BorderLayout
 import java.awt.Dimension
-import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.JScrollPane
-import javax.swing.JTextArea
+import java.awt.Desktop
+import java.io.File
+import javax.swing.*
 
-class PitestOutputDialog(project: Project, private val output: String, titleInfo: String) : DialogWrapper(project) {
+class PitestOutputDialog(
+    project: Project,
+    private val output: String,
+    dialogTitle: String,
+    private val reportFile: File? = null
+) : DialogWrapper(project) {
 
     init {
-        title = titleInfo
+        title = dialogTitle
         init()
     }
 
     override fun createCenterPanel(): JComponent {
+        val panel = JPanel(BorderLayout())
         val textArea = JTextArea(output).apply {
             isEditable = false
             lineWrap = true
@@ -23,10 +29,27 @@ class PitestOutputDialog(project: Project, private val output: String, titleInfo
         }
 
         val scrollPane = JScrollPane(textArea)
-        scrollPane.preferredSize = Dimension(800, 600)  // Adjust size as needed
+        scrollPane.preferredSize = Dimension(800, 600)
+        panel.add(scrollPane, BorderLayout.CENTER)
 
-        return JPanel().apply {
-            add(scrollPane)
+        if (reportFile != null) {
+            val viewReportButton = JButton("HTML Report").apply {
+                addActionListener {
+                    try {
+                        Desktop.getDesktop().browse(reportFile.toURI())
+                    } catch (e: Exception) {
+                        JOptionPane.showMessageDialog(
+                            panel,
+                            "Error opening report: ${e.message}",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE
+                        )
+                    }
+                }
+            }
+            panel.add(viewReportButton, BorderLayout.SOUTH)
         }
+
+        return panel
     }
 }

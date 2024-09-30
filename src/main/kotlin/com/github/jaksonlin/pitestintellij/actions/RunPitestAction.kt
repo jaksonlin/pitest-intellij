@@ -39,12 +39,10 @@ class RunPitestAction : AnAction() {
 
         object : Task.Backgroundable(targetProject, "Running pitest", true) {
             override fun run(indicator: ProgressIndicator) {
-
-                    for (command in commands) {
-                        if (indicator.isCanceled) { break }
-                        command.execute()
-                    }
-
+                for (command in commands) {
+                    if (indicator.isCanceled) { break }
+                    command.execute()
+                }
             }
         }.queue()
     }
