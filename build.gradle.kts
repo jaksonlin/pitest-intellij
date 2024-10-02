@@ -42,8 +42,8 @@ dependencies {
     implementation("com.github.javaparser:javaparser-core:3.24.2") // Add JavaParser dependency
     // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
-        version.set("2023.1") // or whatever version you're targeting
-        type.set("IC") // for IntelliJ IDEA Community Edition
+        version = "2023.1" // or whatever version you're targeting
+
         create(providers.gradleProperty("platformType"), providers.gradleProperty("platformVersion"))
 
         // Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.

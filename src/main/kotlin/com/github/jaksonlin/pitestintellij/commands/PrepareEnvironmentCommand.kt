@@ -99,9 +99,11 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
     }
 
     private fun collectClassPathFileForPitest(){
-        val classpath = GradleUtils.getClasspath(project.basePath!!)
+        val classpath = GradleUtils.getCompilationOutputPaths(project)
+        val testDependencies = GradleUtils.getTestRunDependencies(project)
+        val allDependencies = classpath + testDependencies
         val classpathFile = Paths.get(project.basePath!!, "build", "reports", "pitest", "classpath.txt").toString()
-        File(classpathFile).writeText(classpath.joinToString("\n"))
+        File(classpathFile).writeText(allDependencies.joinToString("\n"))
         context.classpathFile = classpathFile
     }
 
