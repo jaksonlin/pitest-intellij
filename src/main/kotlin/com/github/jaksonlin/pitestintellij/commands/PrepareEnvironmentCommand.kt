@@ -80,22 +80,27 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         if (targetClass.isNullOrBlank()) {
             return
         }
-        val targetClassInfo = FileUtils.findTargetClassFile(context.sourceRoots, targetClass)
-        if (targetClassInfo == null) {
-            showError("Cannot find target class file")
-            throw IllegalStateException("Cannot find target class file")
+        ApplicationManager.getApplication().runReadAction {
+            val targetClassInfo = FileUtils.findTargetClassFile(context.sourceRoots, targetClass)
+            if (targetClassInfo == null) {
+                showError("Cannot find target class file")
+                throw IllegalStateException("Cannot find target class file")
+            }
+            context.fullyQualifiedTargetClassName = javaFileProcessor.getFullyQualifiedName(targetClassInfo.file.toString())
+            if (context.fullyQualifiedTargetClassName.isNullOrBlank()) {
+                showError("Cannot get fully qualified name for target class")
+                throw IllegalStateException("Cannot get fully qualified name for target class")
+            }
+            context.targetClassSourceRoot = targetClassInfo.sourceRoot.toString()
         }
-        context.fullyQualifiedTargetClassName = javaFileProcessor.getFullyQualifiedName(targetClassInfo.file.toString())
-        if (context.fullyQualifiedTargetClassName.isNullOrBlank()) {
-            showError("Cannot get fully qualified name for target class")
-            throw IllegalStateException("Cannot get fully qualified name for target class")
-        }
-        context.targetClassSourceRoot = targetClassInfo.sourceRoot.toString()
+        
     }
     private fun prepareReportDirectory(){
         // prepare the report directory
-        context.reportDirectory = Paths.get(project.basePath!!, "build", "reports", "pitest").toString()
-        File(context.reportDirectory!!).mkdirs()
+        ApplicationManager.getApplication().runReadAction {
+            context.reportDirectory = Paths.get(project.basePath!!, "build", "reports", "pitest").toString()
+            File(context.reportDirectory!!).mkdirs()
+        }
     }
 
     private fun collectClassPathFileForPitest(){
