@@ -26,8 +26,9 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
             showError("Cannot find test file")
             throw IllegalStateException("Cannot find test file")
         }
+        val targetTestClassFilePath = testVirtualFile.path
 
-        collectTargetTestClassName(testVirtualFile)
+        collectTargetTestClassName(targetTestClassFilePath)
         collectJavaInfo(testVirtualFile)
         collectSourceRoots()
         
@@ -37,10 +38,10 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         collectClassPathFileForPitest()
     }
 
-    private fun collectTargetTestClassName(testVirtualFile: VirtualFile) {
-        ApplicationManager.getApplication().runReadAction {
-            context.fullyQualifiedTargetTestClassName = javaFileProcessor.getFullyQualifiedName(testVirtualFile.path)
-        }
+    private fun collectTargetTestClassName( targetTestCalssFilePath:String) {
+
+        context.fullyQualifiedTargetTestClassName = javaFileProcessor.getFullyQualifiedName(targetTestCalssFilePath)
+
         if (context.fullyQualifiedTargetTestClassName.isNullOrBlank()) {
             showError("Cannot get fully qualified name for target test class")
             throw IllegalStateException("Cannot get fully qualified name for target test class")
@@ -80,20 +81,17 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         if (targetClass.isNullOrBlank()) {
             return
         }
-        ApplicationManager.getApplication().runReadAction {
-            val targetClassInfo = FileUtils.findTargetClassFile(context.sourceRoots, targetClass)
-            if (targetClassInfo == null) {
-                showError("Cannot find target class file")
-                throw IllegalStateException("Cannot find target class file")
-            }
-            context.fullyQualifiedTargetClassName = javaFileProcessor.getFullyQualifiedName(targetClassInfo.file.toString())
-            if (context.fullyQualifiedTargetClassName.isNullOrBlank()) {
-                showError("Cannot get fully qualified name for target class")
-                throw IllegalStateException("Cannot get fully qualified name for target class")
-            }
-            context.targetClassSourceRoot = targetClassInfo.sourceRoot.toString()
+        val targetClassInfo = FileUtils.findTargetClassFile(context.sourceRoots, targetClass)
+       if (targetClassInfo == null) {
+           showError("Cannot find target class file")
+           throw IllegalStateException("Cannot find target class file")
+       }
+        context.fullyQualifiedTargetClassName = javaFileProcessor.getFullyQualifiedName(targetClassInfo.file.toString())
+        if (context.fullyQualifiedTargetClassName.isNullOrBlank()) {
+            showError("Cannot get fully qualified name for target class")
+            throw IllegalStateException("Cannot get fully qualified name for target class")
         }
-        
+        context.targetClassSourceRoot = targetClassInfo.sourceRoot.toString()
     }
     private fun prepareReportDirectory(){
         // prepare the report directory
@@ -104,28 +102,32 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
     }
 
     private fun collectClassPathFileForPitest(){
-        val classpath = GradleUtils.getCompilationOutputPaths(project)
-        val testDependencies = GradleUtils.getTestRunDependencies(project)
-        val allDependencies = classpath + testDependencies
-        val classpathFile = Paths.get(project.basePath!!, "build", "reports", "pitest", "classpath.txt").toString()
-        File(classpathFile).writeText(allDependencies.joinToString("\n"))
-        context.classpathFile = classpathFile
+        ApplicationManager.getApplication().runReadAction {
+            val classpath = GradleUtils.getCompilationOutputPaths(project)
+            val testDependencies = GradleUtils.getTestRunDependencies(project)
+            val allDependencies = classpath + testDependencies
+            val classpathFile = Paths.get(project.basePath!!, "build", "reports", "pitest", "classpath.txt").toString()
+            File(classpathFile).writeText(allDependencies.joinToString("\n"))
+            context.classpathFile = classpathFile
+        }
     }
 
     private fun setupPitestLibDependencies(){
-        val pluginLibDir = PathManager.getPluginsPath() + "/pitest-intellij/lib"
-        val dependencies = mutableListOf<String>()
-        for (file in File(pluginLibDir).listFiles()!!) {
-            if (file.name.endsWith(".jar")) {
-                if (file.name.startsWith("pitest")||file.name.startsWith("commons")){
-                    dependencies.add(file.absolutePath)
+        val pluginLibDir = ReadAction.compute<String, Throwable> {
+            PathManager.getPluginsPath() + "/pitest-intellij/lib"
+        }
+            val dependencies = mutableListOf<String>()
+            for (file in File(pluginLibDir).listFiles()!!) {
+                if (file.name.endsWith(".jar")) {
+                    if (file.name.startsWith("pitest") || file.name.startsWith("commons")) {
+                        dependencies.add(file.absolutePath)
+                    }
                 }
             }
-        }
-        if (dependencies.isEmpty()) {
-            Messages.showErrorDialog("Cannot find pitest dependencies", "Error")
-            throw IllegalStateException("Cannot find pitest dependencies")
-        }
-        context.pitestDependencies = dependencies.joinToString(File.pathSeparator)
+            if (dependencies.isEmpty()) {
+                Messages.showErrorDialog("Cannot find pitest dependencies", "Error")
+                throw IllegalStateException("Cannot find pitest dependencies")
+            }
+            context.pitestDependencies = dependencies.joinToString(File.pathSeparator)
     }
 }
