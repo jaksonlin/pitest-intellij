@@ -5,6 +5,7 @@ import com.github.jaksonlin.pitestintellij.util.JavaFileProcessor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -102,14 +103,16 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
     }
 
     private fun collectClassPathFileForPitest(){
-        ApplicationManager.getApplication().runReadAction {
+        val classPathFileContent = ReadAction.compute<String, Throwable> {
             val classpath = GradleUtils.getCompilationOutputPaths(project)
             val testDependencies = GradleUtils.getTestRunDependencies(project)
             val allDependencies = classpath + testDependencies
             val classpathFile = Paths.get(project.basePath!!, "build", "reports", "pitest", "classpath.txt").toString()
-            File(classpathFile).writeText(allDependencies.joinToString("\n"))
             context.classpathFile = classpathFile
+            allDependencies.joinToString("\n")
         }
+        showOutput("Classpath file content: $classPathFileContent", "Classpath file content")
+        File(context.classpathFile!!).writeText(classPathFileContent)
     }
 
     private fun setupPitestLibDependencies(){
