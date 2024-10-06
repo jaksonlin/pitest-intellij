@@ -1,28 +1,64 @@
 package com.github.jaksonlin.pitestintellij.util
 
-import org.gradle.tooling.GradleConnector
-import org.gradle.tooling.model.idea.IdeaProject
-import org.gradle.tooling.model.idea.IdeaSingleEntryLibraryDependency
-import java.io.File
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modules
+import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.roots.CompilerModuleExtension
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.vfs.VfsUtil
+import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.util.GradleUtil
 
 object GradleUtils {
-    fun getClasspath(projectPath: String): List<String> {
-        val classpath = mutableListOf<String>()
-        val connector = GradleConnector.newConnector().forProjectDirectory(File(projectPath))
-        connector.connect().use { connection ->
-            val ideaProject = connection.getModel(IdeaProject::class.java)
-            ideaProject.modules.forEach { ideaModule ->
-                ideaModule.dependencies.forEach { dependency ->
-                    if (dependency is IdeaSingleEntryLibraryDependency) {
-                        classpath.add(dependency.file.absolutePath)
-                    }
+    fun getCompilationOutputPaths(project: Project): List<String> {
+        val projectBasePath = project.basePath ?: return emptyList()
+        val outputPaths: MutableList<String> = ArrayList()
+
+        for (module in project.modules) {
+            val compilerModuleExtension = CompilerModuleExtension.getInstance(module)
+            if (compilerModuleExtension != null) {
+                val outputPath = compilerModuleExtension.compilerOutputUrl
+                if (outputPath != null) {
+                    outputPaths.add(outputPath.toString().removePrefix("file://"))
                 }
-                ideaModule.gradleProject.buildDirectory?.let { buildDir ->
-                    classpath.add(File(buildDir, "classes/java/main").absolutePath)
-                    classpath.add(File(buildDir, "classes/java/test").absolutePath)
+                val testOutputPath = compilerModuleExtension.compilerOutputUrlForTests
+                if (testOutputPath != null) {
+                    outputPaths.add(testOutputPath.toString().removePrefix("file://"))
                 }
             }
         }
-        return classpath
+        return outputPaths
+    }
+
+    fun getTestRunDependencies(project: Project): List<String> {
+        val dependencies: MutableSet<String> = mutableSetOf()
+
+        for (module in project.modules) {
+            val moduleRootManager = ModuleRootManager.getInstance(module)
+
+            // Get all dependencies, including libraries
+            for (orderEntry in moduleRootManager.orderEntries) {
+                if (orderEntry is LibraryOrderEntry) {
+                    for (file in orderEntry.getFiles(OrderRootType.CLASSES)) {
+                        dependencies.add(file.path.removeSuffix("!/"))
+                    }
+                } else {
+                    val moduleDependency = orderEntry.ownerModule
+                    val moduleDependencyRootManager = ModuleRootManager.getInstance(moduleDependency)
+                    for (moduleDependencyOrderEntry in moduleDependencyRootManager.orderEntries) {
+                        if (moduleDependencyOrderEntry is LibraryOrderEntry) {
+                            for (file in moduleDependencyOrderEntry.getFiles(OrderRootType.CLASSES)) {
+                                dependencies.add(file.path.removeSuffix("!/"))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return dependencies.toList()
     }
 }

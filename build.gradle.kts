@@ -28,6 +28,11 @@ repositories {
         defaultRepositories()
     }
 }
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        freeCompilerArgs = freeCompilerArgs + "-Xline-numbers"
+    }
+}
 
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
@@ -35,8 +40,6 @@ dependencies {
     // Add Gradle Tooling API dependency
     implementation(fileTree("lib") { include("*.jar") })
     implementation("com.github.javaparser:javaparser-core:3.24.2") // Add JavaParser dependency
-    
-    implementation("org.gradle:gradle-tooling-api:7.3-20210825160000+0000")
     // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
         create(providers.gradleProperty("platformType"), providers.gradleProperty("platformVersion"))
