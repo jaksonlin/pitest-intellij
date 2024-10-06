@@ -49,3 +49,9 @@ Plugin based on the [IntelliJ Platform Plugin Template][template].
 
 [template]: https://github.com/JetBrains/intellij-platform-plugin-template
 [docs:plugin-description]: https://plugins.jetbrains.com/docs/intellij/plugin-user-experience.html#plugin-description-and-presentation
+
+
+## Known Issues
+
+- [ ] you need to disable kotlin plugin if using old version of gradle, due to issue: https://stackoverflow.com/questions/70448459/gradle-error-in-ijresolvers-gradle-when-running-using-intellij-idea/70597547#70597547
+- [ ] it cannot find the classpath if the project is not managed by Gradle, click on the Project structure and import the project as Gradle project
