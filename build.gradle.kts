@@ -39,7 +39,7 @@ dependencies {
     testImplementation(libs.junit)
     // Add Gradle Tooling API dependency
     implementation(fileTree("lib") { include("*.jar") })
-    implementation("com.github.javaparser:javaparser-core:3.24.2") // Add JavaParser dependency
+    implementation("com.github.javaparser:javaparser-core:3.26.2") // Add JavaParser dependency
     // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
         create(providers.gradleProperty("platformType"), providers.gradleProperty("platformVersion"))
