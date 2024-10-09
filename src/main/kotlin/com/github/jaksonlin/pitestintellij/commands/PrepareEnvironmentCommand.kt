@@ -1,11 +1,11 @@
-import com.github.jaksonlin.pitestintellij.commands.PitestContext
+package com.github.jaksonlin.pitestintellij.commands
+
+import PitestCommand
 import com.github.jaksonlin.pitestintellij.util.FileUtils
 import com.github.jaksonlin.pitestintellij.util.GradleUtils
 import com.github.jaksonlin.pitestintellij.util.JavaFileProcessor
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -34,20 +34,23 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         collectSourceRoots()
         collectResourceDirectories()
         
-        collectTargetClassThatWeTest()
-        prepareReportDirectory()
-        setupPitestLibDependencies()
-        collectClassPathFileForPitest()
+        collectTargetClassThatWeTest(context.sourceRoots)
+        prepareReportDirectory(testVirtualFile)
+
+        setupPitestLibDependencies(context.resourceDirectories!!)
+        collectClassPathFileForPitest(context.reportDirectory!!, context.targetClassPackageName!!, context.resourceDirectories)
     }
 
-    private fun collectTargetTestClassName(targetTestCalssFilePath:String) {
+    private fun collectTargetTestClassName(targetTestClassFilePath:String) {
 
-        context.fullyQualifiedTargetTestClassName = javaFileProcessor.getFullyQualifiedName(targetTestCalssFilePath)
+        val testClassInfo = javaFileProcessor.getFullyQualifiedName(targetTestClassFilePath)
 
-        if (context.fullyQualifiedTargetTestClassName.isNullOrBlank()) {
+        if (testClassInfo == null) {
             showError("Cannot get fully qualified name for target test class")
             throw IllegalStateException("Cannot get fully qualified name for target test class")
         }
+
+        context.fullyQualifiedTargetTestClassName = testClassInfo.fullyQualifiedName
     }
 
     private fun collectJavaInfo(testVirtualFile: VirtualFile) {
@@ -77,32 +80,6 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         }
     }
 
-    private fun collectTargetClassThatWeTest() {
-        // The user input dialog and file operations don't need to be in ReadAction
-        val targetClass = showInputDialog("Please enter the name of the class that you want to test", "Enter target class")
-        if (targetClass.isNullOrBlank()) {
-            return
-        }
-        val targetClassInfo = FileUtils.findTargetClassFile(context.sourceRoots, targetClass)
-       if (targetClassInfo == null) {
-           showError("Cannot find target class file")
-           throw IllegalStateException("Cannot find target class file")
-       }
-        context.fullyQualifiedTargetClassName = javaFileProcessor.getFullyQualifiedName(targetClassInfo.file.toString())
-        if (context.fullyQualifiedTargetClassName.isNullOrBlank()) {
-            showError("Cannot get fully qualified name for target class")
-            throw IllegalStateException("Cannot get fully qualified name for target class")
-        }
-        context.targetClassSourceRoot = targetClassInfo.sourceRoot.toString()
-    }
-    private fun prepareReportDirectory(){
-        // prepare the report directory
-        ApplicationManager.getApplication().runReadAction {
-            context.reportDirectory = Paths.get(project.basePath!!, "build", "reports", "pitest").toString()
-            File(context.reportDirectory!!).mkdirs()
-        }
-    }
-
     private fun collectResourceDirectories(){
         val resourceDirectories = ReadAction.compute<List<String>, Throwable> {
             GradleUtils.getResourceDirectories(project)
@@ -110,31 +87,68 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         context.resourceDirectories = resourceDirectories
     }
 
-    private fun collectClassPathFileForPitest(){
-        if (context.resourceDirectories == null) {
-            collectResourceDirectories()
+    private fun collectTargetClassThatWeTest(sourceRoots:List<Path>) {
+        // The user input dialog and file operations don't need to be in ReadAction
+        val targetClass = showInputDialog("Please enter the name of the class that you want to test", "Enter target class")
+        if (targetClass.isNullOrBlank()) {
+            return
         }
+        val targetClassInfo = FileUtils.findTargetClassFile(sourceRoots, targetClass)
+        if (targetClassInfo == null) {
+            showError("Cannot find target class file")
+            throw IllegalStateException("Cannot find target class file")
+        }
+        val classInfo = javaFileProcessor.getFullyQualifiedName(targetClassInfo.file.toString())
+
+        if (classInfo == null) {
+            showError("Cannot get fully qualified name for target class")
+            throw IllegalStateException("Cannot get fully qualified name for target class")
+        }
+        context.targetClassFullyQualifiedName = classInfo.fullyQualifiedName
+        context.targetClassPackageName = classInfo.packageName
+        context.targetClassSourceRoot = targetClassInfo.sourceRoot.toString()
+    }
+    private fun prepareReportDirectory(testVirtualFile: VirtualFile){
+        // prepare the report directory
+        val parentModulePath = ReadAction.compute<String, Throwable> {
+
+            val projectModule = ProjectRootManager.getInstance(project).fileIndex.getModuleForFile(testVirtualFile)
+            if (projectModule == null) {
+                showError("Cannot find module for test file")
+                throw IllegalStateException("Cannot find module for test file")
+            }
+
+            GradleUtils.getUpperModulePath(project, projectModule)
+        }
+
+        context.reportDirectory = Paths.get(parentModulePath, "build", "reports", "pitest").toString()
+        File(context.reportDirectory!!).mkdirs()
+
+    }
+
+
+
+    private fun collectClassPathFileForPitest(reportDirectory:String, targetPackageName:String, resourceDirectories: List<String>?){
         val classPathFileContent = ReadAction.compute<String, Throwable> {
             val classpath = GradleUtils.getCompilationOutputPaths(project)
             val testDependencies = GradleUtils.getTestRunDependencies(project)
             val allDependencies = ArrayList<String>()
             allDependencies.addAll(classpath)
-            if (context.resourceDirectories != null) {
-                allDependencies.addAll(context.resourceDirectories!!)
+            if (resourceDirectories != null) {
+                allDependencies.addAll(resourceDirectories)
             }
             allDependencies.addAll(testDependencies)
-            val classpathFile = Paths.get(project.basePath!!, "build", "reports", "pitest", "classpath.txt").toString()
-            context.classpathFile = classpathFile
             allDependencies.joinToString("\n")
         }
         showOutput("Classpath file content: $classPathFileContent", "Classpath file content")
+        context.classpathFileDirectory  = Paths.get(reportDirectory, targetPackageName).toString()
+        File(context.classpathFileDirectory).mkdirs()
+        context.classpathFile = Paths.get(context.classpathFileDirectory, "classpath.txt").toString()
         File(context.classpathFile!!).writeText(classPathFileContent)
     }
 
-    private fun setupPitestLibDependencies(){
-        if (context.resourceDirectories == null) {
-            collectResourceDirectories()
-        }
+    private fun setupPitestLibDependencies(resourceDirectories: List<String>) {
+
         val pluginLibDir = ReadAction.compute<String, Throwable> {
             PathManager.getPluginsPath() + "/pitest-intellij/lib"
         }
@@ -149,7 +163,7 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
                 }
             }
         }
-        dependencies.addAll(context.resourceDirectories!!)
+        dependencies.addAll(resourceDirectories)
         if (dependencies.isEmpty()) {
             Messages.showErrorDialog("Cannot find pitest dependencies", "Error")
             throw IllegalStateException("Cannot find pitest dependencies")

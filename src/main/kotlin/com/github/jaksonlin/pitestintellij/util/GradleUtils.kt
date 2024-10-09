@@ -34,6 +34,22 @@ object GradleUtils {
         return outputPaths
     }
 
+    // find the direct parent module's base directory of the child module in the project
+    fun getUpperModulePath(project:Project, childModule:Module):String{
+        var candidateModuleName = ""
+        var candidateModule: Module? = null
+        for (module in project.modules) {
+            val moduleName = module.name
+            if (childModule.name.contains(moduleName) && childModule.name != moduleName) {
+                if (moduleName.length > candidateModuleName.length){
+                    candidateModuleName = moduleName
+                    candidateModule = module
+                }
+            }
+        }
+        return candidateModule?.rootManager?.contentRoots?.get(0)?.path ?: ""
+    }
+
     fun getTestRunDependencies(project: Project): List<String> {
         val dependencies: MutableSet<String> = mutableSetOf()
 

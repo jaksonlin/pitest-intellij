@@ -9,10 +9,12 @@ data class PitestContext(
     var fullyQualifiedTargetTestClassName: String? = null,
     var javaHome: String? = null,
     var sourceRoots: List<Path> = emptyList(),
-    var fullyQualifiedTargetClassName: String? = null,
+    var targetClassFullyQualifiedName: String? = null,
+    var targetClassPackageName: String? = null,
     var targetClassSourceRoot:String?=null,
     var reportDirectory: String? = null,
     var classpathFile: String? = null,
+    var classpathFileDirectory: String? = null,
     var command: List<String> = emptyList(),
     var processResult: ProcessResult? = null,
     var pitestDependencies: String? = null,
@@ -25,7 +27,7 @@ fun dumpPitestContext(context: PitestContext): String {
         fullyQualifiedTargetTestClassName: ${context.fullyQualifiedTargetTestClassName}
         javaHome: ${context.javaHome}
         sourceRoots: ${context.sourceRoots}
-        fullyQualifiedTargetClassName: ${context.fullyQualifiedTargetClassName}
+        fullyQualifiedTargetClassName: ${context.targetClassFullyQualifiedName}
         targetClassSourceRoot: ${context.targetClassSourceRoot}
         reportDirectory: ${context.reportDirectory}
         classpathFile: ${context.classpathFile}
