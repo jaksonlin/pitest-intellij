@@ -21,9 +21,15 @@ object FileUtils {
             return null
         }
 
-        val targetFileName = "$targetClass.java"
+        // Determine if the targetClass is a fully qualified name
+        val targetFileName = if (targetClass.contains('.')) {
+            // Convert fully qualified class name to path
+            targetClass.replace('.', File.separatorChar) + ".java"
+        } else {
+            "$targetClass.java"
+        }
         for (file in Files.walk(directory).filter { path -> Files.isRegularFile(path) }.toList()) {
-            if (file.fileName.toString() == targetFileName) {
+            if (file.toString().endsWith(targetFileName)) {
                 val directoryPath = file.parent
                 val indexToSrcMainJava = directoryPath.toString().indexOf("src${File.separator}main${File.separator}java")
                 val sourceRootPath = directoryPath.toString().substring(0, indexToSrcMainJava)
