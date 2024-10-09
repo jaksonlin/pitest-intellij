@@ -16,6 +16,7 @@ data class PitestContext(
     var command: List<String> = emptyList(),
     var processResult: ProcessResult? = null,
     var pitestDependencies: String? = null,
+    var resourceDirectories: List<String>? = null
 )
 
 fun dumpPitestContext(context: PitestContext): String {

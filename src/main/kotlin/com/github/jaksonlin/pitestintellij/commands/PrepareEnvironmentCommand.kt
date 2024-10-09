@@ -32,6 +32,7 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         collectTargetTestClassName(targetTestClassFilePath)
         collectJavaInfo(testVirtualFile)
         collectSourceRoots()
+        collectResourceDirectories()
         
         collectTargetClassThatWeTest()
         prepareReportDirectory()
@@ -39,7 +40,7 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         collectClassPathFileForPitest()
     }
 
-    private fun collectTargetTestClassName( targetTestCalssFilePath:String) {
+    private fun collectTargetTestClassName(targetTestCalssFilePath:String) {
 
         context.fullyQualifiedTargetTestClassName = javaFileProcessor.getFullyQualifiedName(targetTestCalssFilePath)
 
@@ -102,11 +103,26 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         }
     }
 
+    private fun collectResourceDirectories(){
+        val resourceDirectories = ReadAction.compute<List<String>, Throwable> {
+            GradleUtils.getResourceDirectories(project)
+        }
+        context.resourceDirectories = resourceDirectories
+    }
+
     private fun collectClassPathFileForPitest(){
+        if (context.resourceDirectories == null) {
+            collectResourceDirectories()
+        }
         val classPathFileContent = ReadAction.compute<String, Throwable> {
             val classpath = GradleUtils.getCompilationOutputPaths(project)
             val testDependencies = GradleUtils.getTestRunDependencies(project)
-            val allDependencies = classpath + testDependencies
+            val allDependencies = ArrayList<String>()
+            allDependencies.addAll(classpath)
+            if (context.resourceDirectories != null) {
+                allDependencies.addAll(context.resourceDirectories!!)
+            }
+            allDependencies.addAll(testDependencies)
             val classpathFile = Paths.get(project.basePath!!, "build", "reports", "pitest", "classpath.txt").toString()
             context.classpathFile = classpathFile
             allDependencies.joinToString("\n")
@@ -119,18 +135,18 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         val pluginLibDir = ReadAction.compute<String, Throwable> {
             PathManager.getPluginsPath() + "/pitest-intellij/lib"
         }
-            val dependencies = mutableListOf<String>()
-            for (file in File(pluginLibDir).listFiles()!!) {
-                if (file.name.endsWith(".jar")) {
-                    if (file.name.startsWith("pitest") || file.name.startsWith("commons")) {
-                        dependencies.add(file.absolutePath)
-                    }
+        val dependencies = mutableListOf<String>()
+        for (file in File(pluginLibDir).listFiles()!!) {
+            if (file.name.endsWith(".jar")) {
+                if (file.name.startsWith("pitest") || file.name.startsWith("commons")) {
+                    dependencies.add(file.absolutePath)
                 }
             }
-            if (dependencies.isEmpty()) {
-                Messages.showErrorDialog("Cannot find pitest dependencies", "Error")
-                throw IllegalStateException("Cannot find pitest dependencies")
-            }
-            context.pitestDependencies = dependencies.joinToString(File.pathSeparator)
+        }
+        if (dependencies.isEmpty()) {
+            Messages.showErrorDialog("Cannot find pitest dependencies", "Error")
+            throw IllegalStateException("Cannot find pitest dependencies")
+        }
+        context.pitestDependencies = dependencies.joinToString(File.pathSeparator)
     }
 }
