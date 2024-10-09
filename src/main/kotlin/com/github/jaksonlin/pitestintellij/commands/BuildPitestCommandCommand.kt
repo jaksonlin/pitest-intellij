@@ -9,7 +9,7 @@ class BuildPitestCommandCommand (project: Project, context: PitestContext) : Pit
         val reportDirectory = context.reportDirectory ?: throw IllegalStateException("Report directory not set")
         val classpathFile = context.classpathFile ?: throw IllegalStateException("Classpath file not set")
         val fullyQualifiedTargetTestClassName = context.fullyQualifiedTargetTestClassName ?: throw IllegalStateException("Fully qualified target class name not set")
-        val fullyQualifiedTargetClassName = context.fullyQualifiedTargetClassName ?: throw IllegalStateException("Fully qualified target class name not set")
+        val fullyQualifiedTargetClassName = context.targetClassFullyQualifiedName ?: throw IllegalStateException("Fully qualified target class name not set")
         val targetClassSourceRoot = context.targetClassSourceRoot ?: throw IllegalStateException("target class source root not set")
         val javaHome = context.javaHome ?: throw IllegalStateException("Java home not set")
         val javaExe = "$javaHome/bin/java"

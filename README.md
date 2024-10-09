@@ -55,3 +55,4 @@ Plugin based on the [IntelliJ Platform Plugin Template][template].
 
 - [ ] you need to disable kotlin plugin if using old version of gradle, due to issue: https://stackoverflow.com/questions/70448459/gradle-error-in-ijresolvers-gradle-when-running-using-intellij-idea/70597547#70597547
 - [ ] it cannot find the classpath if the project is not managed by Gradle, click on the Project structure and import the project as Gradle project
+- [ ] it cannot find the resource directory if you don't mark the directory as resource root, right click on the directory and mark as resource root

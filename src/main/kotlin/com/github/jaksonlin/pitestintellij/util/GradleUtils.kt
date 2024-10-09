@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleUtil
@@ -33,6 +34,22 @@ object GradleUtils {
         return outputPaths
     }
 
+    // find the direct parent module's base directory of the child module in the project
+    fun getUpperModulePath(project:Project, childModule:Module):String{
+        var candidateModuleName = ""
+        var candidateModule: Module? = null
+        for (module in project.modules) {
+            val moduleName = module.name
+            if (childModule.name.contains(moduleName) && childModule.name != moduleName) {
+                if (moduleName.length > candidateModuleName.length){
+                    candidateModuleName = moduleName
+                    candidateModule = module
+                }
+            }
+        }
+        return candidateModule?.rootManager?.contentRoots?.get(0)?.path ?: ""
+    }
+
     fun getTestRunDependencies(project: Project): List<String> {
         val dependencies: MutableSet<String> = mutableSetOf()
 
@@ -42,7 +59,7 @@ object GradleUtils {
             // Get all dependencies, including libraries
             for (orderEntry in moduleRootManager.orderEntries) {
                 if (orderEntry is LibraryOrderEntry) {
-                    for (file in orderEntry.getFiles(OrderRootType.CLASSES)) {
+                    for (file in orderEntry.getRootFiles(OrderRootType.CLASSES)) {
                         dependencies.add(file.path.removeSuffix("!/"))
                     }
                 } else {
@@ -50,7 +67,7 @@ object GradleUtils {
                     val moduleDependencyRootManager = ModuleRootManager.getInstance(moduleDependency)
                     for (moduleDependencyOrderEntry in moduleDependencyRootManager.orderEntries) {
                         if (moduleDependencyOrderEntry is LibraryOrderEntry) {
-                            for (file in moduleDependencyOrderEntry.getFiles(OrderRootType.CLASSES)) {
+                            for (file in moduleDependencyOrderEntry.getRootFiles(OrderRootType.CLASSES)) {
                                 dependencies.add(file.path.removeSuffix("!/"))
                             }
                         }
@@ -60,5 +77,18 @@ object GradleUtils {
         }
 
         return dependencies.toList()
+    }
+
+    fun getResourceDirectories(project: Project): List<String> {
+        val testResourceDirectories: MutableList<String> = ArrayList()
+        val projectRootManager = ProjectRootManager.getInstance(project)
+        val vFiles = projectRootManager.contentSourceRoots
+        for (vFile in vFiles) {
+            if (vFile.path.endsWith("resources")) {
+                testResourceDirectories.add(vFile.path)
+            }
+        }
+
+        return testResourceDirectories
     }
 }

@@ -15,7 +15,7 @@ class RunPitestCommand (project: Project, context: PitestContext) : PitestComman
         }
 
         thisLogger().info("Run pitest with command: ${command.joinToString(" ")}")
-        File(Paths.get(project.basePath!!, "build", "reports", "pitest", "command.txt").toString()).writeText(command.joinToString(" "))
+        File(Paths.get(context.classpathFileDirectory!!, "command.txt").toString()).writeText(command.joinToString(" "))
 
         context.processResult = ProcessExecutor.executeProcess(command)
     }
