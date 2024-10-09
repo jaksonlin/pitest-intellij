@@ -132,17 +132,24 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
     }
 
     private fun setupPitestLibDependencies(){
+        if (context.resourceDirectories == null) {
+            collectResourceDirectories()
+        }
         val pluginLibDir = ReadAction.compute<String, Throwable> {
             PathManager.getPluginsPath() + "/pitest-intellij/lib"
         }
         val dependencies = mutableListOf<String>()
         for (file in File(pluginLibDir).listFiles()!!) {
+            if (file.name.startsWith("pitest-intellij-")) {
+                continue
+            }
             if (file.name.endsWith(".jar")) {
                 if (file.name.startsWith("pitest") || file.name.startsWith("commons")) {
                     dependencies.add(file.absolutePath)
                 }
             }
         }
+        dependencies.addAll(context.resourceDirectories!!)
         if (dependencies.isEmpty()) {
             Messages.showErrorDialog("Cannot find pitest dependencies", "Error")
             throw IllegalStateException("Cannot find pitest dependencies")
