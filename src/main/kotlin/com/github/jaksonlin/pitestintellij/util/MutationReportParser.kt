@@ -1,6 +1,8 @@
 package com.github.jaksonlin.pitestintellij.util
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import java.io.File
+import java.io.BufferedInputStream
+import java.io.FileInputStream
 import javax.xml.bind.annotation.*
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper
@@ -10,21 +12,17 @@ import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 
 object MutationReportParser {
-    private val xmlMapper = XmlMapper().registerModule(
-        KotlinModule.Builder()
-            .withReflectionCacheSize(512)
-            .configure(KotlinFeature.NullToEmptyCollection, false)
-            .configure(KotlinFeature.NullToEmptyMap, false)
-            .configure(KotlinFeature.NullIsSameAsDefault, false)
-            .configure(KotlinFeature.SingletonSupport, enabled = false)
-            .configure(KotlinFeature.StrictNullChecks, false)
-            .build()
-    )
+    private val xmlMapper = XmlMapper().apply {
+        registerModule(KotlinModule.Builder().build())
+        // Enable features that might improve performance
+        enable(com.fasterxml.jackson.core.JsonParser.Feature.AUTO_CLOSE_SOURCE)
+        enable(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    }
 
     fun parseMutationsFromXml(filePath: String): Mutations {
-        // Deserialize the XML to Kotlin object
-        val mutations: Mutations = xmlMapper.readValue(File(filePath), Mutations::class.java)
-        return mutations
+        BufferedInputStream(FileInputStream(File(filePath))).use { inputStream ->
+            return xmlMapper.readValue(inputStream, Mutations::class.java)
+        }
     }
 }
 
