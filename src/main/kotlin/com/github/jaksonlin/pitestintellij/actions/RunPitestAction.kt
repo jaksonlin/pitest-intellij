@@ -1,9 +1,6 @@
 package com.github.jaksonlin.pitestintellij.actions
-import com.github.jaksonlin.pitestintellij.commands.PrepareEnvironmentCommand
-import com.github.jaksonlin.pitestintellij.commands.BuildPitestCommandCommand
-import com.github.jaksonlin.pitestintellij.commands.HandlePitestResultCommand
-import com.github.jaksonlin.pitestintellij.commands.PitestContext
-import com.github.jaksonlin.pitestintellij.commands.RunPitestCommand
+import com.github.jaksonlin.pitestintellij.commands.*
+import com.github.jaksonlin.pitestintellij.context.PitestContext
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -15,13 +12,14 @@ class RunPitestAction : AnAction() {
         val targetProject = e.project ?: return
         val testVirtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE) ?: return
 
-        val context = PitestContext(testVirtualFile = testVirtualFile)
+        val context = PitestContext(testFilePath = testVirtualFile.path, timestamp = System.currentTimeMillis())
 
         val commands = listOf(
             PrepareEnvironmentCommand(targetProject, context),
             BuildPitestCommandCommand(targetProject, context),
             RunPitestCommand(targetProject, context),
             HandlePitestResultCommand(targetProject, context),
+            StoreHistoryCommand(targetProject, context),
         )
 
         object : Task.Backgroundable(targetProject, "Running pitest", true) {

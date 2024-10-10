@@ -2,8 +2,8 @@ import com.github.jaksonlin.pitestintellij.ui.PitestOutputDialog
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.github.jaksonlin.pitestintellij.commands.PitestContext
-import com.github.jaksonlin.pitestintellij.commands.dumpPitestContext
+import com.github.jaksonlin.pitestintellij.context.PitestContext
+import com.github.jaksonlin.pitestintellij.context.dumpPitestContext
 import com.intellij.openapi.application.ModalityState
 import java.util.concurrent.atomic.AtomicReference
 

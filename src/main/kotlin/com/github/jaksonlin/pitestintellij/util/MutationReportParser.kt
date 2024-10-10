@@ -4,7 +4,7 @@ import javax.xml.bind.JAXBContext
 import java.io.File
 import javax.xml.bind.annotation.*
 
-class MutationReportParser {
+object MutationReportParser {
 
     fun parseMutationsFromXml(filePath: String): Mutations {
         val jaxbContext = JAXBContext.newInstance(Mutations::class.java)
