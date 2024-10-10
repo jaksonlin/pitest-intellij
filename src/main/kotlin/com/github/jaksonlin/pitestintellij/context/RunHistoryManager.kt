@@ -1,4 +1,6 @@
 package com.github.jaksonlin.pitestintellij.context
+import com.github.jaksonlin.pitestintellij.observer.ObserverBase
+import com.github.jaksonlin.pitestintellij.observer.RunHistoryObserver
 import com.intellij.openapi.application.PathManager
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
@@ -7,14 +9,19 @@ import com.jetbrains.rd.util.addUnique
 import org.pitest.testapi.execute.Pitest
 import java.io.File
 
-object RunHistoryManager {
+object RunHistoryManager: ObserverBase() {
     private val gson = Gson()
     private val historyFile = File(PathManager.getConfigPath(), "run-history.json")
     private val history:MutableMap<String,PitestContext> = loadRunHistory()
 
+    fun getRunHistoryForClass(targetClassFullyQualifiedName: String): PitestContext? {
+        return history[targetClassFullyQualifiedName]
+    }
+
     fun clearRunHistory() {
         history.clear()
         historyFile.delete()
+        notifyObservers()
     }
 
     fun getRunHistory():Map<String,PitestContext> {
@@ -24,6 +31,7 @@ object RunHistoryManager {
     fun saveRunHistory(entry: PitestContext) {
         history[entry.targetClassFullyQualifiedName!!] = entry
         historyFile.writeText(gson.toJson(history))
+        notifyObservers()
     }
 
     fun loadRunHistory(): MutableMap<String,PitestContext> {
