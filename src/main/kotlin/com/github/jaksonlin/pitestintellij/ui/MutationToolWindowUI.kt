@@ -17,11 +17,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBList
 import java.nio.file.Paths
 import javax.swing.Icon
+import javax.swing.JTree
+import javax.swing.tree.DefaultMutableTreeNode
 
 class MutationToolWindowUI(
     private val project: Project,
     private val mediator: MutationMediator,
-    private val mutationList: JBList<String>
+    private val mutationTree: JTree
 ) : MutationUI, RunHistoryObserver {
 
     private var previouslySelectedClass: String? = null
@@ -38,22 +40,23 @@ class MutationToolWindowUI(
     }
 
     override fun onRunHistoryChanged() {
-        updateMutationList()
+        updateMutationTree()
     }
 
-    fun updateMutationList() {
-        val mutations = RunHistoryManager.getRunHistory()
-        mutationList.setListData(mutations.map { it.key }.toTypedArray())
+    fun updateMutationTree() {
+        val treeModel = buildTreeModel()
+        mutationTree.model = treeModel
     }
 
     fun addDoubleClickListener() {
-        mutationList.addMouseListener(object : java.awt.event.MouseAdapter() {
+        mutationTree.addMouseListener(object : java.awt.event.MouseAdapter() {
             override fun mouseClicked(e: java.awt.event.MouseEvent) {
                 if (e.clickCount == 2) {
+                    val selectedNode = mutationTree.lastSelectedPathComponent as? DefaultMutableTreeNode ?: return
+                    val selectedClass = selectedNode.userObject as? String ?: return
                     if (previouslySelectedClass != null && isEditorOpen(previouslySelectedClass!!)) {
                         return
                     }
-                    val selectedClass = mutationList.selectedValue ?: return
                     openClassFileAndAnnotate(RunHistoryManager.getRunHistoryForClass(selectedClass)!!)
                     previouslySelectedClass = selectedClass
                 }

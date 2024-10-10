@@ -9,27 +9,29 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.content.ContentFactory
 import javax.swing.JPanel
 import com.intellij.openapi.project.Project
+import com. intellij.ui.treeStructure.Tree
+import java.awt.BorderLayout
 
 class MutationToolWindowFactory : ToolWindowFactory {
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val mediator = MutationMediatorImpl()
-        val mutationList = JBList<String>()
+        val mutationTree = Tree()
         // standard code to create tool window content
         val contentFactory = ContentFactory.getInstance()
-        val content = contentFactory.createContent(createToolWindowPanel(mutationList), "", false)
+        val content = contentFactory.createContent(createToolWindowPanel(mutationTree), "", false)
         toolWindow.contentManager.addContent(content)
 
-        val toolWindowUI = MutationToolWindowUI(project, mediator, mutationList)
+        val toolWindowUI = MutationToolWindowUI(project, mediator, mutationTree)
         mediator.registerUI(toolWindowUI)
         RunHistoryManager.addObserver(toolWindowUI)
-        toolWindowUI.updateMutationList()
+        toolWindowUI.updateMutationTree()
         toolWindowUI.addDoubleClickListener()
     }
 
-    private fun createToolWindowPanel(mutationList: JBList<String>): JPanel {
-        val panel = JPanel()
-        panel.add(mutationList)
+    private fun createToolWindowPanel(mutationTree: Tree): JPanel {
+        val panel = JPanel(BorderLayout())
+        panel.add(mutationTree, BorderLayout.NORTH)
         return panel
     }
 }
