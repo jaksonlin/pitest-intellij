@@ -40,6 +40,9 @@ dependencies {
     // Add Gradle Tooling API dependency
     implementation(fileTree("lib") { include("*.jar") })
     implementation("com.github.javaparser:javaparser-core:3.24.2") // Add JavaParser dependency
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.0")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.0")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.18.0")
     // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
         create(providers.gradleProperty("platformType"), providers.gradleProperty("platformVersion"))

@@ -1,0 +1,18 @@
+<mutations partial="false">
+    <mutation detected="true" status="KILLED" numberOfTestsRun="5">
+        <sourceFile>Example.java</sourceFile>
+        <mutatedClass>com.example.Example</mutatedClass>
+        <mutatedMethod>exampleMethod</mutatedMethod>
+        <methodDescription>()V</methodDescription>
+        <lineNumber>10</lineNumber>
+        <mutator>org.pitest.mutationtest.engine.gregor.mutators.ReturnValsMutator</mutator>
+        <indexes>
+            <index>0</index>
+        </indexes>
+        <blocks>
+            <block>0</block>
+        </blocks>
+        <killingTest>com.example.ExampleTest</killingTest>
+        <description>Replaced return of integer sized value with 0</description>
+    </mutation>
+</mutations>

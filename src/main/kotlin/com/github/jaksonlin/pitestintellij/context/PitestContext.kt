@@ -12,6 +12,7 @@ data class PitestContext(
     var targetClassFullyQualifiedName: String? = null,
     var targetClassPackageName: String? = null,
     var targetClassSourceRoot:String?=null,
+    var targetClassFilePath: String?=null,
     var reportDirectory: String? = null,
     var classpathFile: String? = null,
     var classpathFileDirectory: String? = null,

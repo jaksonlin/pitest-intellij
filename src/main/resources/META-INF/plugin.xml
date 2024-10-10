@@ -11,6 +11,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow factoryClass="com.github.jaksonlin.pitestintellij.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
+        <toolWindow factoryClass="com.github.jaksonlin.pitestintellij.toolWindow.MutationToolWindowFactory" id="MutationToolWindow"/>
     </extensions>
 
     <applicationListeners>
