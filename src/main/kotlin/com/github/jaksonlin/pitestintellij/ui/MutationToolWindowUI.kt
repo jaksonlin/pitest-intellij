@@ -5,8 +5,6 @@ import com.github.jaksonlin.pitestintellij.context.RunHistoryManager
 import com.github.jaksonlin.pitestintellij.mediator.MutationMediator
 import com.github.jaksonlin.pitestintellij.mediator.MutationUI
 import com.github.jaksonlin.pitestintellij.observer.RunHistoryObserver
-import com.github.jaksonlin.pitestintellij.util.Mutation
-import com.intellij.codeInsight.hint.HintManager
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -16,14 +14,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
-import com.intellij.util.ui.UIUtil
-import java.awt.event.MouseEvent
 import java.nio.file.Paths
 import javax.swing.Icon
-import javax.swing.JLabel
-import javax.swing.JPanel
 
 class MutationToolWindowUI(
     private val project: Project,
@@ -33,13 +26,13 @@ class MutationToolWindowUI(
 
     private var previouslySelectedClass: String? = null
 
-    override fun updateUI(mutationClassFilePath:String, mutations: List<Mutation>) {
+    override fun updateUI(mutationClassFilePath:String, mutationTestResult: Map<Int, Pair<String, Boolean>>) {
         val virtualFile = openClassFile(mutationClassFilePath)
         if (virtualFile != null) {
             val fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile)
             if (fileEditor is com.intellij.openapi.fileEditor.TextEditor) {
                 val editor = fileEditor.editor
-                addMutationMarkers(editor, mutations)
+                addMutationMarkers(editor, mutationTestResult)
             }
         }
     }
@@ -57,16 +50,12 @@ class MutationToolWindowUI(
         mutationList.addMouseListener(object : java.awt.event.MouseAdapter() {
             override fun mouseClicked(e: java.awt.event.MouseEvent) {
                 if (e.clickCount == 2) {
-                    val selectedClass = mutationList.selectedValue ?: return
-                    if (!isEditorOpen(selectedClass)) {
-                        openClassFileAndAnnotate(RunHistoryManager.getRunHistoryForClass(selectedClass)!!)
-                        previouslySelectedClass = selectedClass
-                    } else {
-                        if (selectedClass != previouslySelectedClass) {
-                            previouslySelectedClass = selectedClass
-                            openClassFileAndAnnotate(RunHistoryManager.getRunHistoryForClass(selectedClass)!!)
-                        }
+                    if (previouslySelectedClass != null && isEditorOpen(previouslySelectedClass!!)) {
+                        return
                     }
+                    val selectedClass = mutationList.selectedValue ?: return
+                    openClassFileAndAnnotate(RunHistoryManager.getRunHistoryForClass(selectedClass)!!)
+                    previouslySelectedClass = selectedClass
                 }
             }
         })
@@ -93,40 +82,36 @@ class MutationToolWindowUI(
         return virtualFile
     }
 
-    private fun addMutationMarkers(editor: Editor, mutations: List<Mutation>) {
+    private fun addMutationMarkers(editor: Editor, mutationTestResult: Map<Int, Pair<String, Boolean>>) {
         val markupModel: MarkupModel = editor.markupModel
-        val icon = AllIcons.General.Balloon
 
-        for (mutation in mutations) {
-            if (mutation.status != "KILLED") {
-                val line = mutation.lineNumber - 1
-                val highlighter: RangeHighlighter = markupModel.addLineHighlighter(line, 0, null)
 
-                highlighter.gutterIconRenderer = object : GutterIconRenderer() {
-                    override fun getIcon(): Icon = icon
-                    override fun getTooltipText(): String = mutation.description!!
-                    override fun isNavigateAction(): Boolean = true
-                    fun navigate(e: MouseEvent) {
-                        UIUtil.invokeLaterIfNeeded {
-                            val point = RelativePoint(e)
-                            showTooltip(point, mutation.description!!)
-                        }
-                    }
-                    override fun equals(other: Any?): Boolean {
-                        return other is GutterIconRenderer && other.icon == icon
-                    }
-                    override fun hashCode(): Int {
-                        return icon.hashCode()
-                    }
+        for ((lineNumber, mutationData) in mutationTestResult) {
+            val (mutationDescription, allKilled) = mutationData
+            val icon = when {
+                allKilled -> AllIcons.General.InspectionsOK
+                mutationDescription.contains("KILL") -> AllIcons.General.Warning
+                else -> AllIcons.General.Error
+            }
+
+            val highlighter: RangeHighlighter = markupModel.addLineHighlighter(lineNumber - 1, 0, null)
+
+            highlighter.gutterIconRenderer = object : GutterIconRenderer() {
+                override fun getIcon(): Icon = icon
+                override fun getTooltipText(): String = mutationDescription
+                override fun isNavigateAction(): Boolean = true
+                override fun equals(other: Any?): Boolean {
+                    if (this === other) return true
+                    if (other !is GutterIconRenderer) return false
+                    return icon == other.icon && tooltipText == other.tooltipText
+                }
+
+                override fun hashCode(): Int {
+                    var result = icon.hashCode()
+                    result = 31 * result + (tooltipText.hashCode() ?: 0)
+                    return result
                 }
             }
         }
-    }
-
-    private fun showTooltip(point: RelativePoint, text: String) {
-        val label = JLabel(text)
-        val panel = JPanel()
-        panel.add(label)
-        HintManager.getInstance().showHint(panel, point, HintManager.HIDE_BY_ANY_KEY or HintManager.HIDE_BY_TEXT_CHANGE or HintManager.HIDE_BY_SCROLLING, 0)
     }
 }
