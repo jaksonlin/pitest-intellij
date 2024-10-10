@@ -35,7 +35,7 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         collectResourceDirectories()
         
         collectTargetClassThatWeTest(context.sourceRoots!!)
-        prepareReportDirectory(testVirtualFile)
+        prepareReportDirectory(testVirtualFile, context.targetClassFullyQualifiedName!!)
 
         setupPitestLibDependencies(context.resourceDirectories!!)
         collectClassPathFileForPitest(context.reportDirectory!!, context.targetClassPackageName!!, context.resourceDirectories)
@@ -108,7 +108,8 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         context.targetClassPackageName = classInfo.packageName
         context.targetClassSourceRoot = targetClassInfo.sourceRoot.toString()
     }
-    private fun prepareReportDirectory(testVirtualFile: VirtualFile){
+
+    private fun prepareReportDirectory(testVirtualFile: VirtualFile, className: String){
         // prepare the report directory
         val parentModulePath = ReadAction.compute<String, Throwable> {
 
@@ -120,8 +121,7 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
 
             GradleUtils.getUpperModulePath(project, projectModule)
         }
-
-        context.reportDirectory = Paths.get(parentModulePath, "build", "reports", "pitest").toString()
+        context.reportDirectory = Paths.get(parentModulePath, "build", "reports", "pitest", className).toString()
         File(context.reportDirectory!!).mkdirs()
 
     }

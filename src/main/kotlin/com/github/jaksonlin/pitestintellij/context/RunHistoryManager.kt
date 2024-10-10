@@ -17,6 +17,10 @@ object RunHistoryManager {
         historyFile.delete()
     }
 
+    fun getRunHistory():Map<String,PitestContext> {
+        return history.toMap()
+    }
+
     fun saveRunHistory(entry: PitestContext) {
         history[entry.targetClassFullyQualifiedName!!] = entry
         historyFile.writeText(gson.toJson(history))
