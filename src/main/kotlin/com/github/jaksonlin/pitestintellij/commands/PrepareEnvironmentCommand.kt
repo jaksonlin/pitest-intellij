@@ -90,8 +90,9 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
     private fun collectTargetClassThatWeTest(sourceRoots:List<String>) {
         // The user input dialog and file operations don't need to be in ReadAction
         val targetClass = showInputDialog("Please enter the name of the class that you want to test", "Enter target class")
+        // when user input content but cancel, targetClass is not null we should break the process
         if (targetClass.isNullOrBlank()) {
-            return
+            throw CommandCancellationException("User cancelled the operation")
         }
         val targetClassInfo = FileUtils.findTargetClassFile(sourceRoots, targetClass)
         if (targetClassInfo == null) {
