@@ -21,7 +21,7 @@ class MutationToolWindowViewModel(
         runHistoryManager.addObserver(mutationTree)
     }
 
-    fun handleTreeNodeDoubleClick(selectedNode:DefaultMutableTreeNode){
+    fun handleOpenSelectedNode(selectedNode:DefaultMutableTreeNode){
         mutationTreeMediatorVM.handleMutationTreeDoubleClick(selectedNode)
     }
 

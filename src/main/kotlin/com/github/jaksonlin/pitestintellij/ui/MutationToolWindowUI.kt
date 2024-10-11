@@ -39,6 +39,7 @@ class MutationToolWindowUI(
                 if (path != null) {
                     resultTree.scrollPathToVisible(path)
                     resultTree.selectionPath = path
+                    resultTree.requestFocusInWindow()
                 }
             }
         }
@@ -47,7 +48,18 @@ class MutationToolWindowUI(
             override fun mouseClicked(e: java.awt.event.MouseEvent) {
                 if (e.clickCount == 2) {
                     val selectedNode = resultTree.lastSelectedPathComponent as DefaultMutableTreeNode
-                    vm.handleTreeNodeDoubleClick(selectedNode)
+                    vm.handleOpenSelectedNode(selectedNode)
+                }
+            }
+        })
+
+        resultTree.addKeyListener(object : java.awt.event.KeyAdapter() {
+            override fun keyPressed(e: java.awt.event.KeyEvent) {
+                if (e.keyCode == java.awt.event.KeyEvent.VK_ENTER) {
+                    val selectedNode = resultTree.lastSelectedPathComponent as? DefaultMutableTreeNode
+                    if (selectedNode != null) {
+                        vm.handleOpenSelectedNode(selectedNode)
+                    }
                 }
             }
         })
