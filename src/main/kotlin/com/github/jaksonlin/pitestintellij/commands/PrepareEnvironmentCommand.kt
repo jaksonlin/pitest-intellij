@@ -108,7 +108,7 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         context.targetClassPackageName = classInfo.packageName
         context.targetClassName = classInfo.className
         context.targetClassSourceRoot = targetClassInfo.sourceRoot.toString()
-        context.targetClassFilePath = targetClassInfo.file.toString()
+        context.targetClassFilePath = targetClassInfo.file.normalize().toString().replace("\\", "/")
     }
 
     private fun prepareReportDirectory(testVirtualFile: VirtualFile, className: String){

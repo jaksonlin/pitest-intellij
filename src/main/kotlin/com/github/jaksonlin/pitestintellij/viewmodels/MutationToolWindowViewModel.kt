@@ -22,7 +22,7 @@ class MutationToolWindowViewModel(
     }
 
     fun handleOpenSelectedNode(selectedNode:DefaultMutableTreeNode){
-        mutationTreeMediatorVM.handleMutationTreeDoubleClick(selectedNode)
+        mutationTreeMediatorVM.handleOpenSelectedNode(selectedNode)
     }
 
     fun handleTreeClear() {

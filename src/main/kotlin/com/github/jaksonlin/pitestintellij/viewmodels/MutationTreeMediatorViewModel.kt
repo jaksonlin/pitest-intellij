@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.MarkupModel
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,11 +24,23 @@ class MutationTreeMediatorViewModel(
     private val mediator: IMutationMediator,
 ) : IMutationReportUI {
     private val runHistoryManager = service<RunHistoryManager>()
-    private var previouslySelectedClass: String? = null
+    private val annotatedNodes = HashMap<String, Unit>()
 
 
     init {
         mediator.register(this)
+        registerEditorListener(project)
+    }
+
+    private fun registerEditorListener(project: Project) {
+        project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+            override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+                // Remove the node from the annotatedNodes set when the editor is closed
+                if (annotatedNodes.contains(file.path)) {
+                    annotatedNodes.remove(file.path)
+                }
+            }
+        })
     }
 
     override fun updateMutationResult(mutationClassFilePath:String, mutationTestResult: Map<Int, Pair<String, Boolean>>) {
@@ -41,16 +54,30 @@ class MutationTreeMediatorViewModel(
         }
     }
 
-    fun handleMutationTreeDoubleClick(selectedNode: DefaultMutableTreeNode) {
+    fun handleOpenSelectedNode(selectedNode: DefaultMutableTreeNode) {
         val treePath = selectedNode.path
         val selectedClass = treePath.drop(1).joinToString(".") { it.toString() } // drop the root node and join the rest
+
         val context = runHistoryManager.getRunHistoryForClass(selectedClass) ?: return // if for any reason the class is not in the history, we do nothing
-        if (previouslySelectedClass == selectedClass && isEditorOpen(selectedClass)) {
+        if (annotatedNodes.contains(context.targetClassFilePath)) {
+            switchToSelectedFile(context.targetClassFilePath!!)
             return
         }
         openClassFileAndAnnotate(context)
-        previouslySelectedClass = selectedClass
+        annotatedNodes[context.targetClassFilePath!!] = Unit
     }
+
+    private fun switchToSelectedFile(targetFilePath:String){
+        val fileEditorManager = FileEditorManager.getInstance(project)
+        val currentFile = fileEditorManager.selectedFiles.firstOrNull()
+        if (currentFile == null || currentFile.path != targetFilePath) {
+            val targetFile = LocalFileSystem.getInstance().findFileByPath(targetFilePath)
+            if (targetFile != null){
+                fileEditorManager.openFile(targetFile, true)
+            }
+        }
+    }
+
 
     private fun isEditorOpen(className: String): Boolean {
         val fileEditorManager = FileEditorManager.getInstance(project)
