@@ -1,15 +1,17 @@
 package com.github.jaksonlin.pitestintellij.ui
 
 import com.github.jaksonlin.pitestintellij.context.PitestContext
-import com.github.jaksonlin.pitestintellij.context.RunHistoryManager
+import com.github.jaksonlin.pitestintellij.services.RunHistoryManager
+import com.intellij.openapi.components.service
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import com. intellij.ui.treeStructure.Tree
+import javax.swing.SwingUtilities
 import javax.swing.tree.TreePath
 
 fun buildTreeModel(): DefaultTreeModel {
     val root = DefaultMutableTreeNode("Mutation History")
-    val runHistory = RunHistoryManager.getRunHistory()
+    val runHistory = service<RunHistoryManager>().getRunHistory()
 
     runHistory.forEach { (_, context) ->
         val packageName = context.targetClassPackageName ?: ""
@@ -27,8 +29,21 @@ fun updateMutationTree(mutationTree:Tree,context:PitestContext) {
     val packageNode = getOrCreatePackageNode(root, packageName)
     val newNode = DefaultMutableTreeNode(context.targetClassName)
     packageNode.add(newNode)
-    mutationTree.expandPath(TreePath(packageNode.path)) // expand the package node
-    mutationTree.updateUI()
+    SwingUtilities.invokeLater {
+        mutationTree.expandPath(TreePath(packageNode.path)) // expand the package node
+        mutationTree.updateUI()
+    }
+}
+// Helper function to find a node by user object
+fun findNode(root: DefaultMutableTreeNode, searchText: String): DefaultMutableTreeNode? {
+    val enumeration = root.depthFirstEnumeration()
+    while (enumeration.hasMoreElements()) {
+        val node = enumeration.nextElement() as DefaultMutableTreeNode
+        if (node.userObject.toString().contains(searchText, ignoreCase = true)) {
+            return node
+        }
+    }
+    return null
 }
 
 private fun getOrCreatePackageNode(root: DefaultMutableTreeNode, packageName: String): DefaultMutableTreeNode {

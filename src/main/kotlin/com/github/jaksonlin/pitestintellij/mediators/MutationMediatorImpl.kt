@@ -1,19 +1,19 @@
-package com.github.jaksonlin.pitestintellij.mediator
+package com.github.jaksonlin.pitestintellij.mediators
 
 import com.github.jaksonlin.pitestintellij.util.Mutation
 import com.github.jaksonlin.pitestintellij.util.MutationReportParser
 import kotlinx.coroutines.*
 
-class MutationMediatorImpl : MutationMediator {
-    private var ui: MutationUI? = null
+class MutationMediatorImpl : IMutationMediator {
+    private var clientUI: IMutationReportUI? = null
 
     @OptIn(DelicateCoroutinesApi::class)
-    override fun processMutations(mutationTargetClassFilePath:String, mutationReportFilePath: String) {
+    override fun processMutationResult(mutationTargetClassFilePath:String, mutationReportFilePath: String) {
         GlobalScope.launch(Dispatchers.IO) {
             val mutations = MutationReportParser.parseMutationsFromXml(mutationReportFilePath).mutation
             val renderedFormat = convertResultToUIRenderFormat(mutations)
             withContext(Dispatchers.Main) {
-                ui?.updateUI(mutationTargetClassFilePath, renderedFormat)
+                clientUI?.updateMutationResult(mutationTargetClassFilePath, renderedFormat)
             }
         }
     }
@@ -44,7 +44,7 @@ class MutationMediatorImpl : MutationMediator {
         return "$groupNumber ${mutation.description} -> ${mutation.status}"
     }
 
-    override fun registerUI(ui: MutationUI) {
-        this.ui = ui
+    override fun register(clientUI: IMutationReportUI) {
+        this.clientUI = clientUI
     }
 }

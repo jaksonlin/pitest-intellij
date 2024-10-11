@@ -1,4 +1,4 @@
-package com.github.jaksonlin.pitestintellij.observer
+package com.github.jaksonlin.pitestintellij.observers
 
 open class ObserverBase {
     private val observers = mutableListOf<RunHistoryObserver>()
