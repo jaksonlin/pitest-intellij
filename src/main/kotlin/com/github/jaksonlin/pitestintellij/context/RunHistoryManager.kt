@@ -5,8 +5,6 @@ import com.intellij.openapi.application.PathManager
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.reflect.TypeToken
-import com.jetbrains.rd.util.addUnique
-import org.pitest.testapi.execute.Pitest
 import java.io.File
 
 object RunHistoryManager: ObserverBase() {
@@ -15,13 +13,16 @@ object RunHistoryManager: ObserverBase() {
     private val history:MutableMap<String,PitestContext> = loadRunHistory()
 
     fun getRunHistoryForClass(targetClassFullyQualifiedName: String): PitestContext? {
+        if (!history.containsKey(targetClassFullyQualifiedName)) {
+            return null
+        }
         return history[targetClassFullyQualifiedName]
     }
 
     fun clearRunHistory() {
         history.clear()
         historyFile.delete()
-        notifyObservers()
+        notifyObservers(null)
     }
 
     fun getRunHistory():Map<String,PitestContext> {
@@ -31,7 +32,7 @@ object RunHistoryManager: ObserverBase() {
     fun saveRunHistory(entry: PitestContext) {
         history[entry.targetClassFullyQualifiedName!!] = entry
         historyFile.writeText(gson.toJson(history))
-        notifyObservers()
+        notifyObservers(entry)
     }
 
     fun loadRunHistory(): MutableMap<String,PitestContext> {

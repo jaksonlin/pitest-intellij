@@ -14,16 +14,17 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.components.JBList
 import java.nio.file.Paths
 import javax.swing.Icon
-import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
+import com.intellij.ui.treeStructure.Tree
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreePath
 
 class MutationToolWindowUI(
     private val project: Project,
     private val mediator: MutationMediator,
-    private val mutationTree: JTree
+    private val mutationTree: Tree
 ) : MutationUI, RunHistoryObserver {
 
     private var previouslySelectedClass: String? = null
@@ -39,13 +40,25 @@ class MutationToolWindowUI(
         }
     }
 
-    override fun onRunHistoryChanged() {
-        updateMutationTree()
+    override fun onRunHistoryChanged(eventObj:Any?) {
+        if (eventObj == null) {
+            initializeMutationTree()
+            return
+        }
+        if (eventObj is PitestContext){
+            updateMutationTree(eventObj)
+            return
+        }
     }
 
-    fun updateMutationTree() {
+    fun initializeMutationTree() {
         val treeModel = buildTreeModel()
         mutationTree.model = treeModel
+    }
+
+    private fun updateMutationTree(context:PitestContext) {
+        updateMutationTree(mutationTree, context)
+
     }
 
     fun addDoubleClickListener() {
@@ -53,11 +66,13 @@ class MutationToolWindowUI(
             override fun mouseClicked(e: java.awt.event.MouseEvent) {
                 if (e.clickCount == 2) {
                     val selectedNode = mutationTree.lastSelectedPathComponent as? DefaultMutableTreeNode ?: return
-                    val selectedClass = selectedNode.userObject as? String ?: return
-                    if (previouslySelectedClass != null && isEditorOpen(previouslySelectedClass!!)) {
+                    val treePath = selectedNode.path
+                    val selectedClass = treePath.drop(1).joinToString(".") { it.toString() } // drop the root node and join the rest
+                    val context = RunHistoryManager.getRunHistoryForClass(selectedClass) ?: return // if for any reason the class is not in the history, we do nothing
+                    if (previouslySelectedClass == selectedClass && isEditorOpen(selectedClass)) {
                         return
                     }
-                    openClassFileAndAnnotate(RunHistoryManager.getRunHistoryForClass(selectedClass)!!)
+                    openClassFileAndAnnotate(context)
                     previouslySelectedClass = selectedClass
                 }
             }

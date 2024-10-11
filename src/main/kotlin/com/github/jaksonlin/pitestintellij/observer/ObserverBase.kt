@@ -11,7 +11,7 @@ open class ObserverBase {
         observers.remove(observer)
     }
 
-    protected fun notifyObservers() {
-        observers.forEach { it.onRunHistoryChanged() }
+    protected fun notifyObservers(eventObj: Any?) {
+        observers.forEach { it.onRunHistoryChanged(eventObj) }
     }
 }

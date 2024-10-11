@@ -106,6 +106,7 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         }
         context.targetClassFullyQualifiedName = classInfo.fullyQualifiedName
         context.targetClassPackageName = classInfo.packageName
+        context.targetClassName = classInfo.className
         context.targetClassSourceRoot = targetClassInfo.sourceRoot.toString()
         context.targetClassFilePath = targetClassInfo.file.toString()
     }

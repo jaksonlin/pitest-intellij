@@ -5,7 +5,6 @@ import com.github.jaksonlin.pitestintellij.mediator.MutationMediatorImpl
 import com.github.jaksonlin.pitestintellij.ui.MutationToolWindowUI
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.ui.components.JBList
 import com.intellij.ui.content.ContentFactory
 import javax.swing.JPanel
 import com.intellij.openapi.project.Project
@@ -25,7 +24,7 @@ class MutationToolWindowFactory : ToolWindowFactory {
         val toolWindowUI = MutationToolWindowUI(project, mediator, mutationTree)
         mediator.registerUI(toolWindowUI)
         RunHistoryManager.addObserver(toolWindowUI)
-        toolWindowUI.updateMutationTree()
+        toolWindowUI.initializeMutationTree()
         toolWindowUI.addDoubleClickListener()
     }
 
