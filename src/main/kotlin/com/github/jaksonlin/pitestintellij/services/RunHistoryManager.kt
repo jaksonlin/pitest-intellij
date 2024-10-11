@@ -35,7 +35,8 @@ class RunHistoryManager: ObserverBase() {
     fun saveRunHistory(entry: PitestContext) {
         history[entry.targetClassFullyQualifiedName!!] = entry
         historyFile.writeText(gson.toJson(history))
-        notifyObservers(entry)
+        // this should be a Pair<String, String>>
+        notifyObservers(Pair(entry.targetClassPackageName!!, entry.targetClassName!!))
     }
 
     private fun loadRunHistory(): MutableMap<String, PitestContext> {

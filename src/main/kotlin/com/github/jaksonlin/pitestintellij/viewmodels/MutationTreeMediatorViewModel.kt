@@ -1,11 +1,11 @@
-package com.github.jaksonlin.pitestintellij.ui
+package com.github.jaksonlin.pitestintellij.viewmodels
 
 import com.github.jaksonlin.pitestintellij.context.PitestContext
 import com.github.jaksonlin.pitestintellij.mediators.IMutationMediator
 import com.github.jaksonlin.pitestintellij.mediators.IMutationReportUI
-import com.github.jaksonlin.pitestintellij.observers.RunHistoryObserver
 import com.github.jaksonlin.pitestintellij.services.RunHistoryManager
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.MarkupModel
@@ -17,15 +17,18 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.nio.file.Paths
 import javax.swing.Icon
 import javax.swing.tree.DefaultMutableTreeNode
-import com.intellij.ui.treeStructure.Tree
 
-class MutationTreeUI(
+class MutationTreeMediatorViewModel(
     private val project: Project,
     private val mediator: IMutationMediator,
-    private val mutationTree: Tree,
-    private val runHistoryManager: RunHistoryManager
-) : IMutationReportUI, RunHistoryObserver {
+) : IMutationReportUI {
+    private val runHistoryManager = service<RunHistoryManager>()
     private var previouslySelectedClass: String? = null
+
+
+    init {
+        mediator.register(this)
+    }
 
     override fun updateMutationResult(mutationClassFilePath:String, mutationTestResult: Map<Int, Pair<String, Boolean>>) {
         val virtualFile = openClassFile(mutationClassFilePath)
@@ -38,43 +41,15 @@ class MutationTreeUI(
         }
     }
 
-    override fun onRunHistoryChanged(eventObj:Any?) {
-        if (eventObj == null) {
-            initializeMutationTree()
+    fun handleMutationTreeDoubleClick(selectedNode: DefaultMutableTreeNode) {
+        val treePath = selectedNode.path
+        val selectedClass = treePath.drop(1).joinToString(".") { it.toString() } // drop the root node and join the rest
+        val context = runHistoryManager.getRunHistoryForClass(selectedClass) ?: return // if for any reason the class is not in the history, we do nothing
+        if (previouslySelectedClass == selectedClass && isEditorOpen(selectedClass)) {
             return
         }
-        if (eventObj is PitestContext){
-            updateMutationTree(eventObj)
-            return
-        }
-    }
-
-    fun initializeMutationTree() {
-        val treeModel = buildTreeModel()
-        mutationTree.model = treeModel
-    }
-
-    private fun updateMutationTree(context:PitestContext) {
-        updateMutationTree(mutationTree, context)
-
-    }
-
-    fun addDoubleClickListener() {
-        mutationTree.addMouseListener(object : java.awt.event.MouseAdapter() {
-            override fun mouseClicked(e: java.awt.event.MouseEvent) {
-                if (e.clickCount == 2) {
-                    val selectedNode = mutationTree.lastSelectedPathComponent as? DefaultMutableTreeNode ?: return
-                    val treePath = selectedNode.path
-                    val selectedClass = treePath.drop(1).joinToString(".") { it.toString() } // drop the root node and join the rest
-                    val context = runHistoryManager.getRunHistoryForClass(selectedClass) ?: return // if for any reason the class is not in the history, we do nothing
-                    if (previouslySelectedClass == selectedClass && isEditorOpen(selectedClass)) {
-                        return
-                    }
-                    openClassFileAndAnnotate(context)
-                    previouslySelectedClass = selectedClass
-                }
-            }
-        })
+        openClassFileAndAnnotate(context)
+        previouslySelectedClass = selectedClass
     }
 
     private fun isEditorOpen(className: String): Boolean {

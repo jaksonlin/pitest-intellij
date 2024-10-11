@@ -20,8 +20,7 @@ class MutationToolWindowFactory : ToolWindowFactory {
     }
 
     private fun createToolWindowPanel(project:Project): JPanel {
-        val mediator = MutationMediatorImpl()
-        val mutationToolWindowUI = MutationToolWindowUI(project, mediator)
+        val mutationToolWindowUI = MutationToolWindowUI(project)
         return mutationToolWindowUI.getPanel()
     }
 }
