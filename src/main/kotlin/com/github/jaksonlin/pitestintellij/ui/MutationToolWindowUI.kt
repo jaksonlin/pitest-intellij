@@ -9,11 +9,11 @@ import javax.swing.JButton
 import javax.swing.JPanel
 import javax.swing.JTextField
 import javax.swing.tree.DefaultMutableTreeNode
-
+import com.github.jaksonlin.pitestintellij.MyBundle
 class MutationToolWindowUI(
     project: Project)
 {
-    private val clearButton = JButton("Clear All History")
+    private val clearButton = JButton(MyBundle.message("clear.button"))
     private val searchInput = JTextField(20)
     private val resultTree = ObservableTree()
     private val vm = MutationToolWindowViewModel(project, resultTree)
@@ -21,6 +21,8 @@ class MutationToolWindowUI(
 
     init {
         registerListener()
+        // set the placeholder text
+        searchInput.toolTipText = MyBundle.message("search.placeholder")
     }
 
     private fun registerListener() {

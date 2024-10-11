@@ -1,4 +1,5 @@
 package com.github.jaksonlin.pitestintellij.components
+import com.github.jaksonlin.pitestintellij.MyBundle
 import com.github.jaksonlin.pitestintellij.observers.RunHistoryObserver
 import com.intellij.ui.treeStructure.Tree
 import javax.swing.SwingUtilities
@@ -23,7 +24,7 @@ class ObservableTree:Tree(), RunHistoryObserver {
     }
 
     private fun buildTreeModel(nodeNameList: List<Pair<String, String>>): DefaultTreeModel {
-        val root = DefaultMutableTreeNode("Mutation History")
+        val root = DefaultMutableTreeNode(MyBundle.message("mutation.tree.root"))
 
         nodeNameList.forEach {
             val packageName = it.first
