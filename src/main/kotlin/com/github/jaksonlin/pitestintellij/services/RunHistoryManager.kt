@@ -1,6 +1,7 @@
 package com.github.jaksonlin.pitestintellij.services
 import com.github.jaksonlin.pitestintellij.context.PitestContext
 import com.github.jaksonlin.pitestintellij.observers.ObserverBase
+import com.github.jaksonlin.pitestintellij.observers.RunHistoryObserver
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.google.gson.Gson
@@ -14,6 +15,12 @@ class RunHistoryManager: ObserverBase() {
     private val gson = Gson()
     private val historyFile = File(PathManager.getConfigPath(), "run-history.json")
     private val history:MutableMap<String, PitestContext> = loadRunHistory()
+
+    override fun addObserver(observer: RunHistoryObserver) {
+        super.addObserver(observer)
+        // pass current value of history to observer, List<Pair<String, String>>
+        observer.onRunHistoryChanged(history.map { Pair(it.value.targetClassPackageName!!, it.value.targetClassName!!) })
+    }
 
     fun getRunHistoryForClass(targetClassFullyQualifiedName: String): PitestContext? {
         if (!history.containsKey(targetClassFullyQualifiedName)) {

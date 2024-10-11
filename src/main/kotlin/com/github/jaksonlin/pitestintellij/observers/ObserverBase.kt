@@ -3,7 +3,7 @@ package com.github.jaksonlin.pitestintellij.observers
 open class ObserverBase {
     private val observers = mutableListOf<RunHistoryObserver>()
 
-    fun addObserver(observer: RunHistoryObserver) {
+    open fun addObserver(observer: RunHistoryObserver) {
         observers.add(observer)
     }
 

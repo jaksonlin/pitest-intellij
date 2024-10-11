@@ -9,16 +9,12 @@ import javax.swing.tree.TreePath
 class ObservableTree:Tree(), RunHistoryObserver {
 
     override fun onRunHistoryChanged(eventObj:Any?) {
-        if (eventObj == null) {
-            initializeMutationTree(emptyList())
-            return
+        when (eventObj) {
+            null -> initializeMutationTree(emptyList())
+            is Pair<*, *> -> updateMutationTree(eventObj as? Pair<String, String> ?: return)
+            is List<*> -> initializeMutationTree(eventObj as? List<Pair<String, String>> ?: return)
+            else -> return
         }
-
-        val pair = eventObj as? Pair<String, String>
-        if (pair != null) {
-            updateMutationTree(pair)
-        }
-        return
     }
 
     private fun initializeMutationTree(nodeNameList: List<Pair<String, String>>) {
