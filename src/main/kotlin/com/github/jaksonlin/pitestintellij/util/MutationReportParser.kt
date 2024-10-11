@@ -3,12 +3,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import java.io.File
 import java.io.BufferedInputStream
 import java.io.FileInputStream
-import javax.xml.bind.annotation.*
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement
-import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 
 object MutationReportParser {
