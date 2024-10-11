@@ -1,8 +1,8 @@
 package com.github.jaksonlin.pitestintellij.commands
 
 import PitestCommand
+import com.github.jaksonlin.pitestintellij.context.PitestContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.github.jaksonlin.pitestintellij.ui.PitestOutputDialog
 import java.io.File

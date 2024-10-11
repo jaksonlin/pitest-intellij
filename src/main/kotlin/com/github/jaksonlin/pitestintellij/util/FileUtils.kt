@@ -6,7 +6,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 object FileUtils {
-    fun findTargetClassFile(sourceRoots: List<Path>, targetClass: String): TargetClassInfo? {
+    fun findTargetClassFile(sourceRoots: List<String>, targetClass: String): TargetClassInfo? {
         for (sourceRoot in sourceRoots) {
             val targetClassFile = findFileRecursively(sourceRoot, targetClass)
             if (targetClassFile != null) {
@@ -16,7 +16,8 @@ object FileUtils {
         return null
     }
 
-    private fun findFileRecursively(directory: Path, targetClass: String): TargetClassInfo? {
+    private fun findFileRecursively(directoryPath: String, targetClass: String): TargetClassInfo? {
+        val directory = Paths.get(directoryPath)
         if (!Files.exists(directory) || !Files.isDirectory(directory)) {
             return null
         }
@@ -30,9 +31,9 @@ object FileUtils {
         }
         for (file in Files.walk(directory).filter { path -> Files.isRegularFile(path) }.toList()) {
             if (file.toString().endsWith(targetFileName)) {
-                val directoryPath = file.parent
-                val indexToSrcMainJava = directoryPath.toString().indexOf("src${File.separator}main${File.separator}java")
-                val sourceRootPath = directoryPath.toString().substring(0, indexToSrcMainJava)
+                val directoryParentPath = file.parent
+                val indexToSrcMainJava = directoryParentPath.toString().indexOf("src${File.separator}main${File.separator}java")
+                val sourceRootPath = directoryParentPath.toString().substring(0, indexToSrcMainJava)
                 return TargetClassInfo(file, Paths.get(sourceRootPath))
             }
         }

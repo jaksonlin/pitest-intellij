@@ -1,6 +1,7 @@
 package com.github.jaksonlin.pitestintellij.commands
 
 import PitestCommand
+import com.github.jaksonlin.pitestintellij.context.PitestContext
 import com.github.jaksonlin.pitestintellij.util.FileUtils
 import com.github.jaksonlin.pitestintellij.util.GradleUtils
 import com.github.jaksonlin.pitestintellij.util.JavaFileProcessor
@@ -11,9 +12,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
-import java.nio.file.Path
 import java.nio.file.Paths
 
 class PrepareEnvironmentCommand(project: Project, context: PitestContext) : PitestCommand(project, context) {
@@ -21,21 +22,20 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
 
     override fun execute() {
         val testVirtualFile = ReadAction.compute<VirtualFile?, Throwable> {
-            context.testVirtualFile
+            LocalFileSystem.getInstance().findFileByPath(context.testFilePath!!)
         }
         if (testVirtualFile == null) {
             showError("Cannot find test file")
             throw IllegalStateException("Cannot find test file")
         }
-        val targetTestClassFilePath = testVirtualFile.path
 
-        collectTargetTestClassName(targetTestClassFilePath)
+        collectTargetTestClassName(context.testFilePath!!)
         collectJavaInfo(testVirtualFile)
         collectSourceRoots()
         collectResourceDirectories()
         
-        collectTargetClassThatWeTest(context.sourceRoots)
-        prepareReportDirectory(testVirtualFile)
+        collectTargetClassThatWeTest(context.sourceRoots!!)
+        prepareReportDirectory(testVirtualFile, context.targetClassFullyQualifiedName!!)
 
         setupPitestLibDependencies(context.resourceDirectories!!)
         collectClassPathFileForPitest(context.reportDirectory!!, context.targetClassPackageName!!, context.resourceDirectories)
@@ -71,10 +71,10 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
     }
 
     private fun collectSourceRoots() {
-        context.sourceRoots = ReadAction.compute<List<Path>, Throwable> {
+        context.sourceRoots = ReadAction.compute<List<String>, Throwable> {
             ModuleManager.getInstance(project).modules.flatMap { module ->
                 ModuleRootManager.getInstance(module).contentRoots.map { contentRoot ->
-                    Paths.get(contentRoot.path)
+                    Paths.get(contentRoot.path).toString()
                 }
             }
         }
@@ -87,11 +87,12 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         context.resourceDirectories = resourceDirectories
     }
 
-    private fun collectTargetClassThatWeTest(sourceRoots:List<Path>) {
+    private fun collectTargetClassThatWeTest(sourceRoots:List<String>) {
         // The user input dialog and file operations don't need to be in ReadAction
         val targetClass = showInputDialog("Please enter the name of the class that you want to test", "Enter target class")
+        // when user input content but cancel, targetClass is not null we should break the process
         if (targetClass.isNullOrBlank()) {
-            return
+            throw CommandCancellationException("User cancelled the operation")
         }
         val targetClassInfo = FileUtils.findTargetClassFile(sourceRoots, targetClass)
         if (targetClassInfo == null) {
@@ -106,9 +107,12 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         }
         context.targetClassFullyQualifiedName = classInfo.fullyQualifiedName
         context.targetClassPackageName = classInfo.packageName
+        context.targetClassName = classInfo.className
         context.targetClassSourceRoot = targetClassInfo.sourceRoot.toString()
+        context.targetClassFilePath = targetClassInfo.file.normalize().toString().replace("\\", "/")
     }
-    private fun prepareReportDirectory(testVirtualFile: VirtualFile){
+
+    private fun prepareReportDirectory(testVirtualFile: VirtualFile, className: String){
         // prepare the report directory
         val parentModulePath = ReadAction.compute<String, Throwable> {
 
@@ -120,8 +124,7 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
 
             GradleUtils.getUpperModulePath(project, projectModule)
         }
-
-        context.reportDirectory = Paths.get(parentModulePath, "build", "reports", "pitest").toString()
+        context.reportDirectory = Paths.get(parentModulePath, "build", "reports", "pitest", className).toString()
         File(context.reportDirectory!!).mkdirs()
 
     }
@@ -142,8 +145,8 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
         }
         showOutput("Classpath file content: $classPathFileContent", "Classpath file content")
         context.classpathFileDirectory  = Paths.get(reportDirectory, targetPackageName).toString()
-        File(context.classpathFileDirectory).mkdirs()
-        context.classpathFile = Paths.get(context.classpathFileDirectory, "classpath.txt").toString()
+        File(context.classpathFileDirectory!!).mkdirs()
+        context.classpathFile = Paths.get(context.classpathFileDirectory!!, "classpath.txt").toString()
         File(context.classpathFile!!).writeText(classPathFileContent)
     }
 

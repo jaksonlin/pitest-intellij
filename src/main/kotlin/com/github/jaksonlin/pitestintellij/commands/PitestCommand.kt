@@ -2,14 +2,17 @@ import com.github.jaksonlin.pitestintellij.ui.PitestOutputDialog
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.github.jaksonlin.pitestintellij.commands.PitestContext
-import com.github.jaksonlin.pitestintellij.commands.dumpPitestContext
+import com.github.jaksonlin.pitestintellij.context.PitestContext
+import com.github.jaksonlin.pitestintellij.context.dumpPitestContext
+import com.github.jaksonlin.pitestintellij.services.PitestService
+import com.github.jaksonlin.pitestintellij.services.RunHistoryManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import java.util.concurrent.atomic.AtomicReference
 
 abstract class PitestCommand(protected val project: Project, protected val context: PitestContext) {
     abstract fun execute()
-
+    protected val runHistoryManager = service<RunHistoryManager>()
     protected fun showInputDialog(message: String, title: String): String? {
         val result = AtomicReference<String?>()
         ApplicationManager.getApplication().invokeAndWait({
