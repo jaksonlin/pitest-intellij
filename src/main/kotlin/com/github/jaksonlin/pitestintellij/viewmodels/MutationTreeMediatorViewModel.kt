@@ -5,6 +5,8 @@ import com.github.jaksonlin.pitestintellij.mediators.IMutationMediator
 import com.github.jaksonlin.pitestintellij.mediators.IMutationReportUI
 import com.github.jaksonlin.pitestintellij.services.RunHistoryManager
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -95,7 +97,9 @@ class MutationTreeMediatorViewModel(
     private fun openClassFile(filePath: String): VirtualFile? {
         val virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath)
         if (virtualFile != null) {
-            FileEditorManager.getInstance(project).openFile(virtualFile, true)
+            ApplicationManager.getApplication().invokeLater({
+                FileEditorManager.getInstance(project).openFile(virtualFile, true)
+            }, ModalityState.defaultModalityState())
         }
         return virtualFile
     }
