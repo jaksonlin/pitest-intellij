@@ -1,58 +1,30 @@
-# pitest-intellij
-
-![Build](https://github.com/jaksonlin/pitest-intellij/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
-
-## Template ToDo list
-- [x] Create a new [IntelliJ Platform Plugin Template][template] project.
-- [ ] Get familiar with the [template documentation][template].
-- [ ] Adjust the [pluginGroup](./gradle.properties) and [pluginName](./gradle.properties), as well as the [id](./src/main/resources/META-INF/plugin.xml) and [sources package](./src/main/kotlin).
-- [ ] Adjust the plugin description in `README` (see [Tips][docs:plugin-description])
-- [ ] Review the [Legal Agreements](https://plugins.jetbrains.com/docs/marketplace/legal-agreements.html?from=IJPluginTemplate).
-- [ ] [Publish a plugin manually](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html?from=IJPluginTemplate) for the first time.
-- [ ] Set the `MARKETPLACE_ID` in the above README badges. You can obtain it once the plugin is published to JetBrains Marketplace.
-- [ ] Set the [Plugin Signing](https://plugins.jetbrains.com/docs/intellij/plugin-signing.html?from=IJPluginTemplate) related [secrets](https://github.com/JetBrains/intellij-platform-plugin-template#environment-variables).
-- [ ] Set the [Deployment Token](https://plugins.jetbrains.com/docs/marketplace/plugin-upload.html?from=IJPluginTemplate).
-- [ ] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified about releases containing new features and fixes.
+# Pitest-Gradle
 
 <!-- Plugin description -->
-This Fancy IntelliJ Platform Plugin is going to be your implementation of the brilliant ideas that you have.
-
-This specific section is a source for the [plugin.xml](/src/main/resources/META-INF/plugin.xml) file which will be extracted by the [Gradle](/build.gradle.kts) during the build process.
-
-To keep everything working, do not remove `<!-- ... -->` sections. 
+This is a plugin for IntelliJ IDEA that allows you to run PIT mutation testing on your Gradle project.
 <!-- Plugin description end -->
+
+## Features
+- Run Pitest on your Java Gradle projects
+- View mutation test results in a tool window and navigate to the source code
+- Decorate the editor of the source code with mutation test results
 
 ## Installation
 
-- Using the IDE built-in plugin system:
-  
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "pitest-intellij"</kbd> >
-  <kbd>Install</kbd>
-  
-- Using JetBrains Marketplace:
+1. Download the latest release from the [releases page]()
+2. Open IntelliJ IDEA
+3. Go to `File` -> `Settings` -> `Plugins` -> `Install Plugin from Disk...`
+4. Select the downloaded `.zip` file
 
-  Go to [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID) and install it by clicking the <kbd>Install to ...</kbd> button in case your IDE is running.
+## Usage
 
-  You can also download the [latest release](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID/versions) from JetBrains Marketplace and install it manually using
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
-
-- Manually:
-
-  Download the [latest release](https://github.com/jaksonlin/pitest-intellij/releases/latest) and install it manually using
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
-
-
----
-Plugin based on the [IntelliJ Platform Plugin Template][template].
-
-[template]: https://github.com/JetBrains/intellij-platform-plugin-template
-[docs:plugin-description]: https://plugins.jetbrains.com/docs/intellij/plugin-user-experience.html#plugin-description-and-presentation
-
+1. Open your junit test file, run the test make sure it is passing
+2. Right click on the test file and select `Run PIT Mutation Test`
+3. Input the target mutation test class, for example `com.example.MyClass` or `MyClass`, and click `OK`
+4. The mutation test will run and the results will be displayed in the `Mutation Tool Window`
 
 ## Known Issues
 
-- [ ] you need to disable kotlin plugin if using old version of gradle, due to issue: https://stackoverflow.com/questions/70448459/gradle-error-in-ijresolvers-gradle-when-running-using-intellij-idea/70597547#70597547
+- [ ] [!due to issue](https://stackoverflow.com/questions/70448459/gradle-error-in-ijresolvers-gradle-when-running-using-intellij-idea/70597547#70597547) you need to disable kotlin plugin if using old version of gradle like 4.4 
 - [ ] it cannot find the classpath if the project is not managed by Gradle, click on the Project structure and import the project as Gradle project
 - [ ] it cannot find the resource directory if you don't mark the directory as resource root, right click on the directory and mark as resource root

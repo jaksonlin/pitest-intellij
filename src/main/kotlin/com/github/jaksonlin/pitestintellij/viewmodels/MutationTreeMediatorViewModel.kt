@@ -46,13 +46,16 @@ class MutationTreeMediatorViewModel(
     }
 
     override fun updateMutationResult(mutationClassFilePath:String, mutationTestResult: Map<Int, Pair<String, Boolean>>) {
-        val virtualFile = openClassFile(mutationClassFilePath)
+        val virtualFile = LocalFileSystem.getInstance().findFileByPath(mutationClassFilePath)
         if (virtualFile != null) {
-            val fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile)
-            if (fileEditor is com.intellij.openapi.fileEditor.TextEditor) {
-                val editor = fileEditor.editor
-                addMutationMarkers(editor, mutationTestResult)
-            }
+            ApplicationManager.getApplication().invokeLater({
+                FileEditorManager.getInstance(project).openFile(virtualFile, true)
+                val fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile)
+                if (fileEditor is com.intellij.openapi.fileEditor.TextEditor) {
+                    val editor = fileEditor.editor
+                    addMutationMarkers(editor, mutationTestResult)
+                }
+            }, ModalityState.defaultModalityState())
         }
     }
 
