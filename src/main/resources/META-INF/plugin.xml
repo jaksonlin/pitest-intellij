@@ -22,18 +22,9 @@
         <br/><br/>
       ]]></description>
 
-    <change-notes>
-        <![CDATA[
-           version 1.0.0
-           <br/>
-           <ul>
-           <li><i>Initial version</i> port the plugin API to 1.x to support old version of IDE </li>
-           <li><i>Entry Location</i> change the entry location to second level pop-up menu, we will introduce more function in the later release </li>
-           </ul>
-         ]]>
-    </change-notes>
+    <version>1.0.1-beta</version>
 
-    <vendor email="zhislin [at] icloud.com">Jason Lam</vendor>
+    <vendor email="jaksonlin [at] gmail.com">Jason Lam</vendor>
     <id>com.github.jaksonlin.pitestintellij</id>
     <name>Pitest-Gradle</name>
     <vendor>jaksonlin</vendor>
