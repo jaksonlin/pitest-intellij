@@ -56,6 +56,10 @@ class ObservableTree:Tree(), RunHistoryObserver {
         val root = model.root as DefaultMutableTreeNode
         val packageName = pair.first
         val packageNode = getOrCreatePackageNode(root, packageName)
+        // check if the direct child node already contains the class name
+        if (packageNode.children().asSequence().filterIsInstance<DefaultMutableTreeNode>().any { it.userObject == pair.second }) {
+            return
+        }
         val newNode = DefaultMutableTreeNode(pair.second)
         packageNode.add(newNode)
         SwingUtilities.invokeLater {
@@ -63,4 +67,6 @@ class ObservableTree:Tree(), RunHistoryObserver {
             updateUI()
         }
     }
+
+
 }
