@@ -25,7 +25,7 @@ class MutationTreeMediatorViewModel(
     private val project: Project,
     private val mediator: IMutationMediator,
 ) : IMutationReportUI {
-    private val runHistoryManager = service<RunHistoryManager>()
+    private val runHistoryManager = project.service<RunHistoryManager>()
     private val annotatedNodes = HashMap<String, Unit>()
 
 

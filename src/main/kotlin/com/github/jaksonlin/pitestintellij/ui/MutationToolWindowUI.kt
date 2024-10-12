@@ -3,13 +3,13 @@ package com.github.jaksonlin.pitestintellij.ui
 import com.github.jaksonlin.pitestintellij.components.ObservableTree
 import com.github.jaksonlin.pitestintellij.viewmodels.MutationToolWindowViewModel
 import com.intellij.openapi.project.Project
-import java.awt.BorderLayout
-import java.awt.FlowLayout
 import javax.swing.JButton
 import javax.swing.JPanel
 import javax.swing.JTextField
 import javax.swing.tree.DefaultMutableTreeNode
 import com.github.jaksonlin.pitestintellij.MyBundle
+import java.awt.*
+
 class MutationToolWindowUI(
     project: Project)
 {
@@ -39,7 +39,7 @@ class MutationToolWindowUI(
                 if (path != null) {
                     resultTree.scrollPathToVisible(path)
                     resultTree.selectionPath = path
-                    resultTree.requestFocusInWindow()
+                    resultTree.requestFocusInWindow() // release focus from searchInput so that the key enter event can be captured by the tree
                 }
             }
         }
@@ -53,6 +53,7 @@ class MutationToolWindowUI(
             }
         })
 
+        // handle key enter event, when user press enter key, open the selected node
         resultTree.addKeyListener(object : java.awt.event.KeyAdapter() {
             override fun keyPressed(e: java.awt.event.KeyEvent) {
                 if (e.keyCode == java.awt.event.KeyEvent.VK_ENTER) {
@@ -66,9 +67,21 @@ class MutationToolWindowUI(
     }
 
     private fun createControlPanel():JPanel{
-        val controlPanel = JPanel(FlowLayout(FlowLayout.LEFT))
-        controlPanel.add(clearButton)
-        controlPanel.add(searchInput)
+        val controlPanel = JPanel(GridBagLayout())
+        val gbc = GridBagConstraints().apply {
+            fill = GridBagConstraints.HORIZONTAL
+            gridx = 0
+            gridy = 0
+            weightx = 0.0
+        }
+        controlPanel.add(clearButton, gbc)
+
+        gbc.apply {
+            gridx = 1
+            weightx = 1.0
+        }
+       controlPanel.add(searchInput, gbc)
+
         return controlPanel
     }
 

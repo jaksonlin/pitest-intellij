@@ -44,7 +44,7 @@
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.jaksonlin.pitestintellij.toolWindow.MutationToolWindowFactory" id="MutationToolWindow"/>
+        <toolWindow factoryClass="com.github.jaksonlin.pitestintellij.toolWindow.MutationToolWindowFactory" id="MutationTestHistory" icon="/pitestHistoryWindowIcon.svg"/>
     </extensions>
 
     <applicationListeners>
@@ -54,7 +54,7 @@
     <!-- Add right-click entry to run Pitest on a JUnit test file -->
     <actions>
         <!-- First Level Menu -->
-        <group id="UnittestHelperToolMenu" text="Unittest Helpers" popup="true" description="Java unittest helper tool">
+        <group id="UnittestHelperToolMenu" text="Unittest Helpers" popup="true" description="Java unittest helper tool" icon="/utMenu.svg">
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </group>
 

@@ -7,13 +7,14 @@ import com.intellij.openapi.components.Service
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.reflect.TypeToken
+import com.intellij.openapi.project.Project
 import java.io.File
 
 
-@Service(Service.Level.APP)
-class RunHistoryManager: ObserverBase() {
+@Service(Service.Level.PROJECT)
+class RunHistoryManager(private val project: Project): ObserverBase() {
     private val gson = Gson()
-    private val historyFile = File(PathManager.getConfigPath(), "run-history.json")
+    private val historyFile = File(PathManager.getConfigPath(), "run-"+project.name+"-history.json")
     private val history:MutableMap<String, PitestContext> = loadRunHistory()
 
     override fun addObserver(observer: RunHistoryObserver) {

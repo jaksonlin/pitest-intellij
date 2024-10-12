@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 abstract class PitestCommand(protected val project: Project, protected val context: PitestContext) {
     abstract fun execute()
-    protected val runHistoryManager = service<RunHistoryManager>()
+    protected val runHistoryManager = project.service<RunHistoryManager>()
     protected fun showInputDialog(message: String, title: String): String? {
         val result = AtomicReference<String?>()
         ApplicationManager.getApplication().invokeAndWait({
