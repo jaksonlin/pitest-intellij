@@ -37,7 +37,7 @@ dependencies {
     testImplementation(libs.junit)
     // Add Gradle Tooling API dependency
     implementation(fileTree("lib") { include("*.jar") })
-    implementation("com.github.javaparser:javaparser-core:3.24.2") // Add JavaParser dependency
+    implementation("com.github.javaparser:javaparser-core:3.26.2") // Add JavaParser dependency
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.0")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.0")
