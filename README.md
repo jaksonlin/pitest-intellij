@@ -35,11 +35,13 @@ This is a plugin for IntelliJ IDEA that allows you to run PIT mutation testing o
 ./gradlew runPluginVerifier
 ```
 ```
-2024-10-12T10:51:21 [main] INFO  verification - Finished 1 of 7 verifications (in 1.8 s): IC-222.4554.5 against com.github.jaksonlin.pitestintellij:0.1.0: Compatible
-2024-10-12T10:51:21 [main] INFO  verification - Finished 2 of 7 verifications (in 1.8 s): IC-242.23726.16 against com.github.jaksonlin.pitestintellij:0.1.0: Compatible
-2024-10-12T10:51:21 [main] INFO  verification - Finished 3 of 7 verifications (in 1.8 s): IC-231.9423.9 against com.github.jaksonlin.pitestintellij:0.1.0: Compatible
-2024-10-12T10:51:21 [main] INFO  verification - Finished 4 of 7 verifications (in 1.8 s): IC-223.8836.26 against com.github.jaksonlin.pitestintellij:0.1.0: Compatible
-2024-10-12T10:51:21 [main] INFO  verification - Finished 5 of 7 verifications (in 2.2 s): IC-233.15619.7 against com.github.jaksonlin.pitestintellij:0.1.0: Compatible
-2024-10-12T10:51:21 [main] INFO  verification - Finished 6 of 7 verifications (in 2.2 s): IC-241.19072.14 against com.github.jaksonlin.pitestintellij:0.1.0: Compatible
-2024-10-12T10:51:21 [main] INFO  verification - Finished 7 of 7 verifications (in 2.2 s): IC-232.10335.12 against com.github.jaksonlin.pitestintellij:0.1.0: Compatible
+2024-10-12T18:50:17 [main] INFO  verification - Finished 1 of 8 verifications (in 2.1 s): IC-223.8836.26 against com.github.jaksonlin.pitestintellij:1.0.1-beta: Compatible
+2024-10-12T18:50:17 [main] INFO  verification - Finished 2 of 8 verifications (in 2.1 s): IC-232.10335.12 against com.github.jaksonlin.pitestintellij:1.0.1-beta: Compatible
+2024-10-12T18:50:17 [main] INFO  verification - Finished 3 of 8 verifications (in 2.1 s): IC-233.15619.7 against com.github.jaksonlin.pitestintellij:1.0.1-beta: Compatible
+2024-10-12T18:50:17 [main] INFO  verification - Finished 4 of 8 verifications (in 2.1 s): IC-231.9423.9 against com.github.jaksonlin.pitestintellij:1.0.1-beta: Compatible
+2024-10-12T18:50:17 [main] INFO  verification - Finished 5 of 8 verifications (in 2.1 s): IC-222.4554.5 against com.github.jaksonlin.pitestintellij:1.0.1-beta: Compatible
+2024-10-12T18:50:17 [main] INFO  verification - Finished 6 of 8 verifications (in 2.1 s): IC-241.19072.14 against com.github.jaksonlin.pitestintellij:1.0.1-beta: Compatible
+2024-10-12T18:50:17 [main] INFO  verification - Finished 7 of 8 verifications (in 2.1 s): IC-242.23726.16 against com.github.jaksonlin.pitestintellij:1.0.1-beta: Compatible
+2024-10-12T18:50:25 [main] INFO  verification - Finished 8 of 8 verifications (in 10.4 s): IC-243.19420.21 against com.github.jaksonlin.pitestintellij:1.0.1-beta: Compatible
+
 ```
