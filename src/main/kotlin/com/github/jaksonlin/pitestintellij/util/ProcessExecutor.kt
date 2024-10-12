@@ -1,6 +1,5 @@
 package com.github.jaksonlin.pitestintellij.util
 
-import com.intellij.openapi.diagnostic.thisLogger
 
 data class ProcessResult(
     val exitCode: Int,
@@ -30,10 +29,8 @@ object ProcessExecutor {
             outputThread.join()
             errorThread.join()
 
-            thisLogger().info("Run pitest with command: ${command.joinToString(" ")}")
             return ProcessResult(exitCode, output.toString(), errorOutput.toString())
         } catch (e: Exception) {
-            thisLogger().error("Error when running pitest", e)
             return ProcessResult(-1, "", e.message ?: "Unknown error occurred")
         }
     }

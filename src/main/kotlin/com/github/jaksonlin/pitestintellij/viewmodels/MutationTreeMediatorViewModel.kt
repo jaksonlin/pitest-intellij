@@ -5,6 +5,8 @@ import com.github.jaksonlin.pitestintellij.mediators.IMutationMediator
 import com.github.jaksonlin.pitestintellij.mediators.IMutationReportUI
 import com.github.jaksonlin.pitestintellij.services.RunHistoryManager
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -23,7 +25,7 @@ class MutationTreeMediatorViewModel(
     private val project: Project,
     private val mediator: IMutationMediator,
 ) : IMutationReportUI {
-    private val runHistoryManager = service<RunHistoryManager>()
+    private val runHistoryManager = project.service<RunHistoryManager>()
     private val annotatedNodes = HashMap<String, Unit>()
 
 
@@ -44,13 +46,16 @@ class MutationTreeMediatorViewModel(
     }
 
     override fun updateMutationResult(mutationClassFilePath:String, mutationTestResult: Map<Int, Pair<String, Boolean>>) {
-        val virtualFile = openClassFile(mutationClassFilePath)
+        val virtualFile = LocalFileSystem.getInstance().findFileByPath(mutationClassFilePath)
         if (virtualFile != null) {
-            val fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile)
-            if (fileEditor is com.intellij.openapi.fileEditor.TextEditor) {
-                val editor = fileEditor.editor
-                addMutationMarkers(editor, mutationTestResult)
-            }
+            ApplicationManager.getApplication().invokeLater({
+                FileEditorManager.getInstance(project).openFile(virtualFile, true)
+                val fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile)
+                if (fileEditor is com.intellij.openapi.fileEditor.TextEditor) {
+                    val editor = fileEditor.editor
+                    addMutationMarkers(editor, mutationTestResult)
+                }
+            }, ModalityState.defaultModalityState())
         }
     }
 
@@ -95,7 +100,9 @@ class MutationTreeMediatorViewModel(
     private fun openClassFile(filePath: String): VirtualFile? {
         val virtualFile = LocalFileSystem.getInstance().findFileByPath(filePath)
         if (virtualFile != null) {
-            FileEditorManager.getInstance(project).openFile(virtualFile, true)
+            ApplicationManager.getApplication().invokeLater({
+                FileEditorManager.getInstance(project).openFile(virtualFile, true)
+            }, ModalityState.defaultModalityState())
         }
         return virtualFile
     }

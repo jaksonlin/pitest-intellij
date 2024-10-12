@@ -13,7 +13,7 @@ class MutationToolWindowViewModel(
     project: Project,
     mutationTree: ObservableTree
 ) {
-    private val runHistoryManager = service<RunHistoryManager>()
+    private val runHistoryManager = project.service<RunHistoryManager>()
     private val mutationReportMediator:IMutationMediator = MutationMediatorImpl()
     private val mutationTreeMediatorVM = MutationTreeMediatorViewModel(project, mutationReportMediator)
 

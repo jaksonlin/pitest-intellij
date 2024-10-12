@@ -1,31 +1,72 @@
-<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
+    <description><![CDATA[
+        PIT Mutation Testing (pitest.org) for Gradle Project
+        <br/>
+        Bundled with PIT 1.16.1
+        <br/><br/>
+        Adds a 'Unittest Helpers' menu to the right-click context menu in the editor, and the `Run Mutation Test` action to the submenu.
+        <br/>
+        Adds a 'Mutation Test History' tool window to display the history of mutation tests for each of the `mutated` classes.
+        <br/>
+        You can navigate to the source code of the mutated class by searching on the class name with enter key.
+        <br/>
+        Adds rendering of the mutation test result on the code editor.
+        <br/>
+        Automatic detection of the classpath dependencies for running the mutation test, making use of the Gradle API from the IntelliJ IDEA.
+        <br/>
+        Support long classpath for running the mutation test, especially for enterprise projects when there are thousands of classes in the classpath; and even jar files from other locations.
+        <br/>
+        Additional classes in resource directory (marked as resource in IDE) are added to the classpath for mutation testing.
+        <br/><br/>
+        <b>Usage:</b> Right-click on a JUnit test file and select `Unittest Helpers` -> `Run Mutation Test` to run PIT mutation testing on the test file.
+        <br/><br/>
+      ]]></description>
+
+    <change-notes>
+        <![CDATA[
+           version 1.0.0
+           <br/>
+           <ul>
+           <li><i>Initial version</i> port the plugin API to 1.x to support old version of IDE </li>
+           <li><i>Entry Location</i> change the entry location to second level pop-up menu, we will introduce more function in the later release </li>
+           </ul>
+         ]]>
+    </change-notes>
+
+    <vendor email="zhislin [at] icloud.com">Jason Lam</vendor>
     <id>com.github.jaksonlin.pitestintellij</id>
-    <name>pitest-intellij</name>
+    <name>Pitest-Gradle</name>
     <vendor>jaksonlin</vendor>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.java</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
+
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.jaksonlin.pitestintellij.toolWindow.MutationToolWindowFactory" id="MutationToolWindow"/>
+        <toolWindow factoryClass="com.github.jaksonlin.pitestintellij.toolWindow.MutationToolWindowFactory" id="MutationTestHistory" icon="/pitestHistoryWindowIcon.svg"/>
     </extensions>
 
     <applicationListeners>
         <listener class="com.github.jaksonlin.pitestintellij.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     </applicationListeners>
-    <!-- add right click entry to run pitest on a junit test file -->
+
+    <!-- Add right-click entry to run Pitest on a JUnit test file -->
     <actions>
-        <group id="XKUnittestCheckMenu" text="menu.parent" description="XK Unittest Helper Tool" >
+        <!-- First Level Menu -->
+        <group id="UnittestHelperToolMenu" text="Unittest Helpers" popup="true" description="Java unittest helper tool" icon="/utMenu.svg">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </group>
 
-        <add-to-group group-id="EditorPopupMenu" anchor="last"/>
-
-        <action
-                class="com.github.jaksonlin.pitestintellij.actions.RunPitestAction"
-                id="RunPitestAction"
-                text="Run Pitest">
-        </action>
+        <!-- Second Level Submenu -->
+        <group id="UnittestHelperSubMenu" text="Unittest Helper Tools">
+            <add-to-group group-id="UnittestHelperToolMenu" anchor="last"/>
+            <!-- Action inside the submenu -->
+            <action
+                    class="com.github.jaksonlin.pitestintellij.actions.RunPitestAction"
+                    id="RunPitestAction"
+                    text="Run Mutation Test">
+            </action>
         </group>
     </actions>
 </idea-plugin>
