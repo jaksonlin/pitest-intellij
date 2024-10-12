@@ -5,13 +5,15 @@ import com.github.jaksonlin.pitestintellij.context.PitestContext
 import com.github.jaksonlin.pitestintellij.context.dumpPitestContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.ui.components.JBScrollPane
 import com.jetbrains.rd.util.ExecutionException
 import java.io.PrintWriter
 import java.io.StringWriter
+import javax.swing.JTextArea
 
 @Service(Service.Level.APP)
 class PitestService {
@@ -47,24 +49,33 @@ class PitestService {
                             Messages.showInfoMessage("Pitest run was canceled", "Canceled")
                         }
                     } else {
-                        val sw = StringWriter()
-                        e.printStackTrace(PrintWriter(sw))
-                        val stackTrace = sw.toString()
-                        val contextInformation = dumpPitestContext(context = context)
-                        ApplicationManager.getApplication().invokeLater {
-                            Messages.showErrorDialog("Error executing Pitest command: ${e.message}; $contextInformation\n$stackTrace", "Error")
-                        }
+                        showErrorDialog(e, context)
                     }
                 } catch (e: Exception) {
-                    val sw = StringWriter()
-                    e.printStackTrace(PrintWriter(sw))
-                    val stackTrace = sw.toString()
-                    val contextInformation = dumpPitestContext(context = context)
-                    ApplicationManager.getApplication().invokeLater {
-                        Messages.showErrorDialog("Error executing Pitest command: ${e.message}; $contextInformation\n$stackTrace", "Error")
-                    }
+                    showErrorDialog(e, context)
                 }
             }
         }.queue()
+    }
+
+
+    private fun showErrorDialog(e: Exception, context: PitestContext) {
+        val sw = StringWriter()
+        e.printStackTrace(PrintWriter(sw))
+        val stackTrace = sw.toString()
+        val contextInformation = dumpPitestContext(context = context)
+        val errorMessage = "Error executing Pitest command: ${e.message}; $contextInformation\n$stackTrace"
+
+        val textArea = JTextArea(errorMessage)
+        textArea.isEditable = false
+        textArea.lineWrap = true
+        textArea.wrapStyleWord = true
+
+        val scrollPane = JBScrollPane(textArea)
+        scrollPane.preferredSize = java.awt.Dimension(640, 480)
+
+        ApplicationManager.getApplication().invokeLater {
+            Messages.showErrorDialog(scrollPane, errorMessage)
+        }
     }
 }
