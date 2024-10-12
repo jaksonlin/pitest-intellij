@@ -27,8 +27,8 @@
            version 1.0.0
            <br/>
            <ul>
-           <li><i>Report dir</i> parameter for maven project is set to 'target/report' by default</li>
-           <li><i>Target classes</i> parameter for maven project is set to 'groupId' by default </li>
+           <li><i>Initial version</i> port the plugin API to 1.x to support old version of IDE </li>
+           <li><i>Entry Location</i> change the entry location to second level pop-up menu, we will introduce more function in the later release </li>
            </ul>
          ]]>
     </change-notes>
