@@ -11,3 +11,6 @@
 ## 1.0.1-beta - 2024-10-12
 - Bugfix: run history will have multiple entries for the same test
 - Bugfix: cancellation logic enhancement
+
+## 1.0.1 - 2024-10-12
+- Update compatibility with IntelliJ IDEA 2024.3
