@@ -1,3 +1,4 @@
+import com.github.jaksonlin.pitestintellij.commands.CommandCancellationException
 import com.github.jaksonlin.pitestintellij.ui.PitestOutputDialog
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -8,6 +9,8 @@ import com.github.jaksonlin.pitestintellij.services.PitestService
 import com.github.jaksonlin.pitestintellij.services.RunHistoryManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
+import com.intellij.openapi.ui.DialogWrapper
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicReference
 
 abstract class PitestCommand(protected val project: Project, protected val context: PitestContext) {
@@ -22,9 +25,17 @@ abstract class PitestCommand(protected val project: Project, protected val conte
     }
 
     protected fun showOutput(output: String, title: String) {
+        val future = CompletableFuture<Void>()
         ApplicationManager.getApplication().invokeLater {
-            PitestOutputDialog(project, output, title).show()
+            val dialog = PitestOutputDialog(project, output, title)
+            dialog.show()
+            if (dialog.exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
+                future.completeExceptionally(CommandCancellationException("User cancelled the dialog"))
+            } else {
+                future.complete(null)
+            }
         }
+        future.get()
     }
     
     protected fun showError(message: String) {
