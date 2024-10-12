@@ -14,3 +14,6 @@
 
 ## 1.0.1 - 2024-10-12
 - Update compatibility with IntelliJ IDEA 2024.3
+
+## 1.0.2 - 2024-10-12
+- Bugfix: change plugin name introduce a bug in the code.

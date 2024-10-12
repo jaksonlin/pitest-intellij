@@ -153,11 +153,11 @@ class PrepareEnvironmentCommand(project: Project, context: PitestContext) : Pite
     private fun setupPitestLibDependencies(resourceDirectories: List<String>) {
 
         val pluginLibDir = ReadAction.compute<String, Throwable> {
-            PathManager.getPluginsPath() + "/pitest-intellij/lib"
+            PathManager.getPluginsPath() + "/pitest-gradle/lib"
         }
         val dependencies = mutableListOf<String>()
         for (file in File(pluginLibDir).listFiles()!!) {
-            if (file.name.startsWith("pitest-intellij-")) {
+            if (file.name.startsWith("pitest-gradle-")) {
                 continue
             }
             if (file.name.endsWith(".jar")) {
